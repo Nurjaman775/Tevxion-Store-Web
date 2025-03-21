@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Dashboard - Tevxion</title>
+    <link rel="stylesheet" href="dashboard.css" />
+    <link
+      href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="dashboard.js"></script>
+  </head>
+  <body class="admin-theme">
+    <nav>
+      <div class="sidebar">
+        <div class="logo">Tevxion Admin</div>
+        <ul>
+          <li>
+            <a href="#"><i class="bx bxs-dashboard"></i> Dashboard</a>
+          </li>
+          <li>
+            <a href="#"><i class="bx bx-user"></i> Users</a>
+          </li>
+          <li>
+            <a href="#"><i class="bx bx-package"></i> Products</a>
+          </li>
+          <li>
+            <a href="#"><i class="bx bx-cog"></i> Settings</a>
+          </li>
+          <li>
+            <a href="#" onclick="logout()"
+              ><i class="bx bx-log-out"></i> Logout</a
+            >
+          </li>
+        </ul>
+      </div>
+      <div class="main-content">
+        <div id="overviewSection" class="dashboard-section active">
+          <h2>Dashboard Overview</h2>
+          <div class="stats-grid">
+            <div class="stat-card" id="totalUsers">
+              <div class="stat-header">
+                <h3>Total Users</h3>
+                <i class="bx bx-user"></i>
+              </div>
+              <div class="stat-value">Loading...</div>
+              <div class="stat-details"></div>
+            </div>
+            <div class="stat-card" id="totalProducts">
+              <div class="stat-header">
+                <h3>Total Products</h3>
+                <i class="bx bx-package"></i>
+              </div>
+              <div class="stat-value">
+                <div class="loading-spinner"></div>
+              </div>
+              <div class="stat-details"></div>
+              <div class="stat-chart">
+                <canvas id="productsChart"></canvas>
+              </div>
+            </div>
+            <div class="stat-card">
+              <h3>Revenue</h3>
+              <p>Rp 89,123,456</p>
+            </div>
+          </div>
+        </div>
+
+        <div id="usersSection" class="dashboard-section">
+          <div class="section-header">
+            <h2>User Management</h2>
+            <button class="btn-add" onclick="adminManager.showAddUserModal()">
+              <i class="bx bx-user-plus"></i> Add User
+            </button>
+          </div>
+          <div class="user-filters">
+            <select id="roleFilter" title="Filter users by role">
+              <option value="">All Roles</option>
+              <option value="admin">Admin</option>
+              <option value="cashier">Cashier</option>
+              <option value="customer">Customer</option>
+            </select>
+            <input type="text" id="userSearch" placeholder="Search users..." />
+          </div>
+          <div class="users-table-container">
+            <!-- Users table will be loaded here -->
+          </div>
+        </div>
+
+        <div id="productsSection" class="dashboard-section">
+          <div class="section-header">
+            <h2>Product Management</h2>
+            <button
+              class="btn-add"
+              onclick="adminManager.showAddProductModal()"
+            >
+              <i class="bx bx-package"></i> Add Product
+            </button>
+          </div>
+          <div class="product-filters">
+            <select id="categoryFilter" title="Filter products by category">
+              <option value="">All Categories</option>
+            </select>
+            <input
+              type="text"
+              id="productSearch"
+              placeholder="Search products..."
+            />
+          </div>
+          <div class="products-table-container">
+            <!-- Products table will be loaded here -->
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Modals -->
+    <div id="userModal" class="modal">
+      <!-- User add/edit form here -->
+    </div>
+
+    <div id="productModal" class="modal">
+      <!-- Product add/edit form here -->
+    </div>
+  </body>
+</html>

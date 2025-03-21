@@ -1,0 +1,166 @@
+.profile-container {
+  max-width: 800px;
+  margin: 20px auto;
+  padding: 20px;
+  background: #1c1c1c;
+  border-radius: 10px;
+  color: white;
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.profile-avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: #45f3ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2em;
+}
+
+.profile-info {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.info-group {
+  margin-bottom: 15px;
+}
+
+.info-label {
+  color: #8f8f8f;
+  font-size: 0.9em;
+  margin-bottom: 5px;
+}
+
+.info-value {
+  font-size: 1.1em;
+  color: #45f3ff;
+}
+
+.profile-wrapper {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  min-height: 100vh;
+}
+
+.nav-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 1rem;
+  color: #8f8f8f;
+  text-decoration: none;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.nav-item.active {
+  background: rgba(69, 243, 255, 0.1);
+  color: #45f3ff;
+}
+
+.section-content {
+  background: #1c1c1c;
+  border-radius: 12px;
+  padding: 2rem;
+  margin: 1rem;
+  border: 1px solid rgba(69, 243, 255, 0.1);
+}
+
+.address-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.order-timeline {
+  position: relative;
+  padding-left: 2rem;
+  margin-top: 2rem;
+}
+
+.order-item {
+  position: relative;
+  padding-bottom: 2rem;
+  border-left: 2px solid rgba(69, 243, 255, 0.1);
+  padding-left: 2rem;
+}
+
+.notification-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem;
+  border-bottom: 1px solid rgba(69, 243, 255, 0.1);
+}
+
+.privacy-settings {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.setting-card {
+  background: rgba(28, 28, 28, 0.8);
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 1px solid rgba(69, 243, 255, 0.1);
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+}
+
+.dashboard-section {
+  display: none;
+  padding: 2rem;
+}
+
+.dashboard-section.active {
+  display: block;
+}
+
+.overview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  background: rgba(69, 243, 255, 0.1);
+  padding: 1.5rem;
+  border-radius: 12px;
+}
+
+.date-range {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.date-range input {
+  padding: 0.5rem;
+  border: 1px solid rgba(69, 243, 255, 0.2);
+  border-radius: 4px;
+  background: #1c1c1c;
+  color: white;
+}
+
+/* Add more specific styles for dashboard components */
