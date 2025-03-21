@@ -128,15 +128,7 @@ function initGoogleSignIn() {
         window.location.href = "../toko-belanja/index.html";
       } catch (error) {
         console.error("Google Sign-In Error Details:", error);
-
-        // Handle specific errors
-        if (error.code === "auth/popup-closed-by-user") {
-          alert("Login dibatalkan. Silakan coba lagi.");
-        } else if (error.code === "auth/network-request-failed") {
-          alert("Koneksi internet bermasalah. Silakan periksa koneksi Anda.");
-        } else {
-          alert(`Login gagal: ${error.message}`);
-        }
+        alert(`Login gagal: ${error.message}`);
       }
     });
   }

@@ -23,7 +23,7 @@ function checkAuthStatus() {
     `;
 
     profileLink.querySelector(".user-profile").onclick = () => {
-      window.location.href = "../dashboard/profile.html";
+      window.location.href = "./dashboard/profile.html";
     };
 
     navLinks.appendChild(profileLink);

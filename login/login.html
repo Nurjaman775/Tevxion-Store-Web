@@ -34,8 +34,19 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 
-    <!-- Firebase Config -->
-    <script src="../config/firebase-config.js"></script>
+    <!-- Initialize Firebase -->
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyBZOvvYSy86-JqHxtU2zT8oPSTs7t-_vME",
+        authDomain: "tevxion-store-storage.firebaseapp.com",
+        projectId: "tevxion-store-storage",
+        storageBucket: "tevxion-store-storage.firebasestorage.app",
+        messagingSenderId: "138176363117",
+        appId: "1:138176363117:web:cdaafd9d6dd5213967dd64",
+        measurementId: "G-ZYMZJW3T2H",
+      };
+      firebase.initializeApp(firebaseConfig);
+    </script>
 
     <!-- Auth Script -->
     <script src="auth.js"></script>
