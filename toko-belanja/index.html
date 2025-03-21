@@ -11,7 +11,7 @@
       href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="icon" href="../../assets/img/favicon.ico" type="image/x-icon" />
+    <link rel="icon" href="/web/img/favicon.ico" type="image/x-icon" />
     <title>Tevxion - Belanja</title>
     <link rel="stylesheet" href="./style.css" />
     <link
@@ -24,6 +24,8 @@
     />
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    <script src="../../web/config/firebase-config.js"></script>
   </head>
   <body>
     <header>
@@ -85,12 +87,12 @@
         <div class="product-card">
           <div class="product-image">
             <img
-              src="./assets/img/Laptop.jpg"
+              src="/web/img/Laptop.jpg"
               alt="Laptop"
               loading="lazy"
               width="200"
               height="200"
-              onerror="this.src='./assets/img/placeholder.jpg'"
+              onerror="this.src='../assets/img/placeholder.jpg'"
             />
           </div>
           <h3>Laptop Gaming</h3>
@@ -99,7 +101,7 @@
             <p class="material">Material: Metal</p>
             <p class="date">Added: 2024-02-20</p>
           </div>
-          <p class="stock">Stok: 5</p>
+          <p class="stock">Stok: 10</p>
           <div class="button-group">
             <button
               class="cart-btn add-to-cart"
@@ -117,7 +119,7 @@
         <div class="product-card">
           <div class="product-image">
             <img
-              src="./assets/img/PC Gaming.jpg"
+              src="/web/img/PC Gaming.jpg"
               alt="PC Gaming"
               loading="lazy"
               width="200"
@@ -149,7 +151,7 @@
         <div class="product-card">
           <div class="product-image">
             <img
-              src="./assets/img/Handphone.jpg"
+              src="/web/img/Handphone.jpg"
               alt="Headphone"
               loading="lazy"
               width="200"

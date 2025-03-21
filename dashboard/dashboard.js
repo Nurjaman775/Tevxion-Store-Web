@@ -237,6 +237,7 @@ document.addEventListener("DOMContentLoaded", function () {
 class AdminManager {
   constructor() {
     this.initializeAdminFeatures();
+    this.initializeStockManagement();
   }
 
   async initializeAdminFeatures() {
@@ -534,11 +535,59 @@ class AdminManager {
     document.body.appendChild(notification);
     setTimeout(() => notification.remove(), 3000);
   }
-}
 
-// Initialize AdminManager
-document.addEventListener("DOMContentLoaded", () => {
-  if (document.querySelector(".admin-theme")) {
-    window.adminManager = new AdminManager();
+  initializeStockManagement() {
+    const stockFilter = document.getElementById("stockFilter");
+    const stockSearch = document.getElementById("stockSearch");
+
+    if (stockFilter) {
+      stockFilter.addEventListener("change", () => {
+        this.loadStockData({
+          stock: stockFilter.value,
+        });
+      });
+    }
+
+    if (stockSearch) {
+      stockSearch.addEventListener("input", () => {
+        this.loadStockData({
+          search: stockSearch.value,
+        });
+      });
+    }
   }
-});
+
+  async loadStockData(filters = {}) {
+    try {
+      const stockManager = new StockManager();
+      const products = await stockManager.filterProducts(filters);
+      this.renderStockTable(products);
+    } catch (error) {
+      console.error("Error loading stock data:", error);
+      this.showNotification("Failed to load stock data", "error");
+    }
+  }
+
+  renderStockTable(products) {
+    const tableContainer = document.querySelector(".stock-table");
+    if (!tableContainer) return;
+
+    const table = `
+      <table>
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Current Stock</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${products.map((product) => this.renderStockRow(product)).join("")}
+        </tbody>
+      </table>
+    `;
+
+    tableContainer.innerHTML = table;
+  }
+}

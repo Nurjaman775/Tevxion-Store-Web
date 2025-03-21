@@ -27,7 +27,7 @@ class ShopManager {
         date: "2024-02-20",
         image: "../img/Laptop.jpg",
         description: "High-performance gaming laptop",
-        stock: 5,
+        stock: 10,
       },
       {
         id: "static_2",
@@ -276,24 +276,59 @@ class ShopManager {
     return true;
   }
 
-  handleCheckout() {
-    if (!this.checkAuth()) {
-      // Save cart to cookies before redirecting to login
-      this.saveCartToCookies();
-      alert("Silakan login terlebih dahulu untuk melakukan checkout");
-      window.location.href = "../login/login.html";
-      return;
-    }
+  async handleCheckout() {
+    // ...existing auth check...
 
-    // Update product stock
-    this.cart.forEach((item) => {
-      const product = this.products.find((p) => p.id === item.id);
-      if (product) {
-        product.stock -= item.quantity;
+    try {
+      const user = JSON.parse(sessionStorage.getItem("currentUser"));
+      const transactionRef = firebase.database().ref("transactions").push();
+
+      // Create transaction data
+      const transaction = {
+        userId: user.username,
+        items: this.cart,
+        totalAmount: this.calculateTotal(),
+        timestamp: firebase.database.ServerValue.TIMESTAMP,
+        status: "completed",
+      };
+
+      // Update stock in one transaction
+      const updates = {};
+      for (const item of this.cart) {
+        const stockRef = `products/${item.id}/stock`;
+        const currentStock = await this.getProductStock(item.id);
+
+        if (currentStock < item.quantity) {
+          alert(`Stok tidak mencukupi untuk produk ${item.name}`);
+          return;
+        }
+
+        updates[stockRef] = currentStock - item.quantity;
       }
-    });
 
-    this.showReceipt();
+      // Save transaction and update stock atomically
+      updates[`transactions/${transactionRef.key}`] = transaction;
+
+      await firebase.database().ref().update(updates);
+
+      // Show receipt and clear cart
+      this.showReceipt();
+      this.cart = [];
+      this.updateCartDisplay();
+      this.saveCartToSession();
+      this.clearCartCookies();
+    } catch (error) {
+      console.error("Checkout error:", error);
+      alert("Terjadi kesalahan saat checkout. Silakan coba lagi.");
+    }
+  }
+
+  async getProductStock(productId) {
+    const snapshot = await firebase
+      .database()
+      .ref(`products/${productId}/stock`)
+      .once("value");
+    return snapshot.val() || 0;
   }
 
   addToCart(productId) {
@@ -438,7 +473,12 @@ class ShopManager {
         }" data-id="${product.id}">
           ${apiProductBadge}
           <div class="product-image">
-            <img src="${product.image}" alt="${product.name}" loading="lazy">
+            <img 
+              src="${product.image}" 
+              alt="${product.name}" 
+              loading="lazy"
+              onerror="this.onerror=null; this.src='../../assets/img/no-image.png';"
+            >
           </div>
           <h3>${product.name}</h3>
           <p class="price">Rp ${product.price.toLocaleString()}</p>

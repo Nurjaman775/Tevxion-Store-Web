@@ -19,20 +19,38 @@
         <div class="logo">Tevxion Admin</div>
         <ul>
           <li>
-            <a href="#"><i class="bx bxs-dashboard"></i> Dashboard</a>
+            <a href="#" data-section="overview">
+              <i class="bx bxs-dashboard"></i> Dashboard</a
+            >
           </li>
           <li>
-            <a href="#"><i class="bx bx-user"></i> Users</a>
+            <a href="#" data-section="users">
+              <i class="bx bx-user"></i> Users</a
+            >
           </li>
           <li>
-            <a href="#"><i class="bx bx-package"></i> Products</a>
+            <a href="#" data-section="products">
+              <i class="bx bx-package"></i> Products</a
+            >
           </li>
           <li>
-            <a href="#"><i class="bx bx-cog"></i> Settings</a>
+            <a href="#" data-section="stock">
+              <i class="bx bx-store"></i> Stock Management</a
+            >
           </li>
           <li>
-            <a href="#" onclick="logout()"
-              ><i class="bx bx-log-out"></i> Logout</a
+            <a href="#" data-section="transactions">
+              <i class="bx bx-receipt"></i> Transactions</a
+            >
+          </li>
+          <li>
+            <a href="#" data-section="settings">
+              <i class="bx bx-cog"></i> Settings</a
+            >
+          </li>
+          <li>
+            <a href="#" onclick="logout()">
+              <i class="bx bx-log-out"></i> Logout</a
             >
           </li>
         </ul>
@@ -112,6 +130,57 @@
           </div>
           <div class="products-table-container">
             <!-- Products table will be loaded here -->
+          </div>
+        </div>
+
+        <!-- Add new Stock Management Section -->
+        <div id="stockSection" class="dashboard-section">
+          <div class="section-header">
+            <h2>Stock Management</h2>
+            <div class="stock-actions">
+              <button
+                class="btn-update-stock"
+                onclick="adminManager.updateBatchStock()"
+              >
+                <i class="bx bx-refresh"></i> Update Stock
+              </button>
+              <button
+                class="btn-export"
+                onclick="adminManager.exportStockReport()"
+              >
+                <i class="bx bx-export"></i> Export Report
+              </button>
+            </div>
+          </div>
+
+          <div class="stock-filters">
+            <select id="stockFilter">
+              <option value="all">All Items</option>
+              <option value="low">Low Stock</option>
+              <option value="out">Out of Stock</option>
+            </select>
+            <input type="text" id="stockSearch" placeholder="Search items..." />
+          </div>
+
+          <div class="stock-table">
+            <!-- Stock table will be loaded here -->
+          </div>
+        </div>
+
+        <!-- Add new Transactions Section -->
+        <div id="transactionsSection" class="dashboard-section">
+          <div class="section-header">
+            <h2>Transaction History</h2>
+            <div class="transaction-filters">
+              <input type="date" id="startDate" />
+              <input type="date" id="endDate" />
+              <button onclick="adminManager.filterTransactions()">
+                Filter
+              </button>
+            </div>
+          </div>
+          <div class="transactions-table">
+            <!-- Transactions will be loaded here -->
           </div>
         </div>
       </div>

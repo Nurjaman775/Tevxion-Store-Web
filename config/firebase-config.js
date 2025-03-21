@@ -1,17 +1,24 @@
 const firebaseConfig = {
-  apiKey: process.env.FIREBASE_API_KEY || "fallback-api-key",
-  authDomain: process.env.FIREBASE_AUTH_DOMAIN || "fallback-auth-domain",
-  projectId: process.env.FIREBASE_PROJECT_ID || "fallback-project-id",
+  apiKey:
+    process.env.FIREBASE_API_KEY || "AIzaSyBZOvvYSy86-JqHxtU2zT8oPSTs7t-_vME",
+  authDomain:
+    process.env.FIREBASE_AUTH_DOMAIN || "tevxion-store-storage.firebaseapp.com",
+  projectId: process.env.FIREBASE_PROJECT_ID || "tevxion-store-storage",
   storageBucket:
-    process.env.FIREBASE_STORAGE_BUCKET || "fallback-storage-bucket",
-  messagingSenderId:
-    process.env.FIREBASE_MESSAGING_SENDER_ID || "fallback-messaging-sender-id",
-  appId: process.env.FIREBASE_APP_ID || "fallback-app-id",
-  measurementId:
-    process.env.FIREBASE_MEASUREMENT_ID || "fallback-measurement-id",
+    process.env.FIREBASE_STORAGE_BUCKET ||
+    "tevxion-store-storage.firebasestorage.app",
+  messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID || "138176363117",
+  appId:
+    process.env.FIREBASE_APP_ID || "1:138176363117:web:cdaafd9d6dd5213967dd64",
+  measurementId: process.env.FIREBASE_MEASUREMENT_ID || "G-ZYMZJW3T2H",
+  databaseURL:
+    "https://tevxion-store-storage-default-rtdb.asia-southeast1.firebasedatabase.app",
 };
 
 // Initialize Firebase
 if (!firebase.apps.length) {
   firebase.initializeApp(firebaseConfig);
 }
+
+// Initialize Realtime Database
+const db = firebase.database();
