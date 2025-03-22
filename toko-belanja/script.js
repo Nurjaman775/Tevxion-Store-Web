@@ -9,9 +9,6 @@
  * @property {number} ITEMS_PER_PAGE - Number of products displayed per page
  * @property {boolean} isCartOpen - Tracks whether the cart dropdown is currently open
  */
-import { initializeApp } from "firebase/app";
-import { getDatabase, ref, set, get, onValue } from "firebase/database";
-
 class ShopManager {
   constructor() {
     this.products = [];
@@ -279,56 +276,24 @@ class ShopManager {
     return true;
   }
 
-  async handleCheckout() {
+  handleCheckout() {
     if (!this.checkAuth()) {
+      // Save cart to cookies before redirecting to login
       this.saveCartToCookies();
       alert("Silakan login terlebih dahulu untuk melakukan checkout");
       window.location.href = "../login/login.html";
       return;
     }
 
-    try {
-      const db = firebase.database();
-      const updates = {};
-
-      // Update stok untuk setiap item di keranjang
-      for (const item of this.cart) {
-        const productRef = db.ref(`products/${item.id}`);
-        const snapshot = await productRef.once("value");
-        const currentStock = snapshot.val()?.stock || 0;
-
-        if (currentStock < item.quantity) {
-          alert(`Stok tidak mencukupi untuk produk ${item.name}`);
-          return;
-        }
-
-        // Perbarui stok
-        updates[`products/${item.id}/stock`] = currentStock - item.quantity;
+    // Update product stock
+    this.cart.forEach((item) => {
+      const product = this.products.find((p) => p.id === item.id);
+      if (product) {
+        product.stock -= item.quantity;
       }
+    });
 
-      // Catat transaksi
-      const transactionRef = db.ref("transactions").push();
-      updates[`transactions/${transactionRef.key}`] = {
-        userId: JSON.parse(sessionStorage.getItem("currentUser")).username,
-        items: this.cart,
-        totalAmount: this.calculateTotal(),
-        timestamp: firebase.database.ServerValue.TIMESTAMP,
-        status: "completed",
-      };
-
-      // Jalankan semua update dalam satu transaksi
-      await db.ref().update(updates);
-
-      // Tampilkan struk dan bersihkan keranjang
-      this.showReceipt();
-      this.cart = [];
-      this.updateCartDisplay();
-      this.saveCartToSession();
-      this.clearCartCookies();
-    } catch (error) {
-      console.error("Checkout error:", error);
-      alert("Terjadi kesalahan saat checkout. Silakan coba lagi.");
-    }
+    this.showReceipt();
   }
 
   addToCart(productId) {
