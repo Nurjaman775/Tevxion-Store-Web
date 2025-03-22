@@ -1,30 +1,36 @@
+import { initializeApp } from "firebase/app";
+import { getDatabase, ref, set, get, onValue } from "firebase/database";
+
 class StockManager {
   constructor() {
-    this.db = firebase.firestore();
-    this.initializeListeners();
+    this.db = firebase.database();
     this.loadProducts();
-    this.loadTransactions();
+    this.initializeListeners();
   }
 
   async loadProducts() {
-    const productsRef = this.db.collection("products");
-    const snapshot = await productsRef.get();
+    try {
+      const snapshot = await this.db.ref("products").once("value");
+      const products = snapshot.val() || {};
 
-    const tableBody = document.getElementById("productsTableBody");
-    tableBody.innerHTML = "";
+      const tableBody = document.getElementById("productsTableBody");
+      tableBody.innerHTML = "";
 
-    snapshot.forEach((doc) => {
-      const product = doc.data();
-      const row = this.createProductRow(doc.id, product);
-      tableBody.appendChild(row);
-    });
+      Object.entries(products).forEach(([id, product]) => {
+        const row = this.createProductRow(id, product);
+        tableBody.appendChild(row);
+      });
+    } catch (error) {
+      console.error("Error loading products:", error);
+      this.showNotification("Gagal memuat data produk", "error");
+    }
   }
 
   createProductRow(id, product) {
     const row = document.createElement("tr");
     row.innerHTML = `
       <td>${product.name}</td>
-      <td>${product.stock}</td>
+      <td class="stock-value">${product.stock || 0}</td>
       <td>
         <input type="number" min="1" class="stock-input" id="stock-${id}">
       </td>
@@ -42,142 +48,40 @@ class StockManager {
     const addStock = parseInt(input.value);
 
     if (isNaN(addStock) || addStock <= 0) {
-      alert("Masukkan jumlah stok yang valid");
+      this.showNotification("Masukkan jumlah stok yang valid", "error");
       return;
     }
 
     try {
-      const productRef = this.db.collection("products").doc(productId);
+      const productRef = this.db.ref(`products/${productId}`);
+      const snapshot = await productRef.once("value");
+      const currentStock = snapshot.val()?.stock || 0;
 
-      await this.db.runTransaction(async (transaction) => {
-        const doc = await transaction.get(productRef);
-        const newStock = doc.data().stock + addStock;
-        transaction.update(productRef, { stock: newStock });
+      await productRef.update({
+        stock: currentStock + addStock,
+        lastUpdated: firebase.database.ServerValue.TIMESTAMP,
       });
 
-      alert("Stok berhasil diperbarui");
+      this.showNotification("Stok berhasil diperbarui", "success");
       this.loadProducts();
+      input.value = "";
     } catch (error) {
       console.error("Error updating stock:", error);
-      alert("Gagal memperbarui stok");
+      this.showNotification("Gagal memperbarui stok", "error");
     }
   }
 
-  async updateBatchStock(stockUpdates) {
-    const batch = this.db.batch();
+  showNotification(message, type) {
+    const notification = document.createElement("div");
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+    document.body.appendChild(notification);
 
-    try {
-      for (const update of stockUpdates) {
-        const productRef = this.db.collection("products").doc(update.productId);
-        batch.update(productRef, { stock: update.newStock });
-      }
-
-      await batch.commit();
-      this.showNotification("Stock updated successfully", "success");
-      this.loadProducts();
-    } catch (error) {
-      console.error("Error updating stock:", error);
-      this.showNotification("Failed to update stock", "error");
-    }
-  }
-
-  async exportStockReport() {
-    try {
-      const snapshot = await this.db.collection("products").get();
-      const products = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-
-      const csv = this.convertToCSV(products);
-      this.downloadCSV(csv, `stock-report-${new Date().toISOString()}.csv`);
-    } catch (error) {
-      console.error("Error exporting report:", error);
-      this.showNotification("Failed to export report", "error");
-    }
-  }
-
-  async filterProducts(filters = {}) {
-    let query = this.db.collection("products");
-
-    if (filters.stock === "low") {
-      query = query.where("stock", "<=", 10);
-    } else if (filters.stock === "out") {
-      query = query.where("stock", "==", 0);
-    }
-
-    if (filters.search) {
-      query = query
-        .where("name", ">=", filters.search)
-        .where("name", "<=", filters.search + "\uf8ff");
-    }
-
-    const snapshot = await query.get();
-    return snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-  }
-
-  convertToCSV(items) {
-    const headers = ["ID", "Name", "Stock", "Last Updated"];
-    const rows = items.map((item) => [
-      item.id,
-      item.name,
-      item.stock,
-      new Date(item.lastUpdated).toLocaleString(),
-    ]);
-
-    return [headers, ...rows].map((row) => row.join(",")).join("\n");
-  }
-
-  downloadCSV(csv, filename) {
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    a.click();
-    window.URL.revokeObjectURL(url);
-  }
-
-  async loadTransactions() {
-    const transactionsRef = this.db
-      .collection("transactions")
-      .orderBy("timestamp", "desc")
-      .limit(50);
-
-    const snapshot = await transactionsRef.get();
-    const container = document.getElementById("transactionsTable");
-
-    container.innerHTML = snapshot.docs
-      .map((doc) => {
-        const trans = doc.data();
-        return `
-        <div class="transaction-item">
-          <div class="transaction-header">
-            <span>ID: ${doc.id}</span>
-            <span>User: ${trans.userId}</span>
-            <span>Total: Rp${trans.totalAmount.toLocaleString("id-ID")}</span>
-          </div>
-          <div class="transaction-details">
-            ${trans.items
-              .map(
-                (item) => `
-              <div class="transaction-item-detail">
-                ${item.name} x ${item.quantity}
-              </div>
-            `
-              )
-              .join("")}
-          </div>
-        </div>
-      `;
-      })
-      .join("");
+    setTimeout(() => notification.remove(), 3000);
   }
 
   initializeListeners() {
+    // Filter dan pencarian produk
     document.getElementById("searchProduct")?.addEventListener("input", (e) => {
       this.filterProducts(e.target.value);
     });

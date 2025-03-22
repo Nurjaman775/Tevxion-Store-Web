@@ -1,3 +1,6 @@
+import { initializeApp } from "firebase/app";
+import { getDatabase, ref, set, get, onValue } from "firebase/database";
+
 const firebaseConfig = {
   apiKey:
     process.env.FIREBASE_API_KEY || "AIzaSyBZOvvYSy86-JqHxtU2zT8oPSTs7t-_vME",
