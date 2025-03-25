@@ -276,24 +276,77 @@ class ShopManager {
     return true;
   }
 
-  handleCheckout() {
+  async handleCheckout() {
     if (!this.checkAuth()) {
-      // Save cart to cookies before redirecting to login
-      this.saveCartToCookies();
       alert("Silakan login terlebih dahulu untuk melakukan checkout");
       window.location.href = "../login/login.html";
       return;
     }
 
-    // Update product stock
-    this.cart.forEach((item) => {
-      const product = this.products.find((p) => p.id === item.id);
-      if (product) {
-        product.stock -= item.quantity;
-      }
-    });
+    try {
+      const currentUser = JSON.parse(sessionStorage.getItem("currentUser"));
 
-    this.showReceipt();
+      // Persiapkan data transaksi
+      const transactionData = {
+        items: this.cart.map((item) => ({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+        })),
+        total: this.calculateTotal(),
+        customerInfo: {
+          userId: currentUser.username,
+          timestamp: new Date().toISOString(),
+        },
+        status: "completed",
+      };
+
+      // Simpan transaksi ke Firestore
+      const db = firebase.firestore();
+      const transactionRef = await db
+        .collection("transactions")
+        .add(transactionData);
+
+      // Handle static products and API products differently
+      const batch = db.batch();
+
+      // Update stok hanya untuk produk statis
+      for (const item of this.cart) {
+        if (item.id.startsWith("static_")) {
+          // Update stok di memori
+          const productIndex = this.staticProducts.findIndex(
+            (p) => p.id === item.id
+          );
+          if (productIndex !== -1) {
+            this.staticProducts[productIndex].stock -= item.quantity;
+          }
+
+          // Simpan perubahan stok ke localStorage
+          localStorage.setItem(
+            "staticProducts",
+            JSON.stringify(this.staticProducts)
+          );
+        }
+      }
+
+      // Tampilkan struk
+      this.showReceipt({
+        ...transactionData,
+        transactionId: transactionRef.id,
+      });
+
+      // Bersihkan keranjang
+      this.cart = [];
+      this.saveCartToSession();
+      this.updateCartDisplay();
+      this.closeCart();
+
+      alert("Transaksi berhasil!");
+    } catch (error) {
+      console.error("Error checkout:", error);
+      alert("Gagal melakukan checkout: " + error.message);
+    }
   }
 
   addToCart(productId) {
@@ -945,60 +998,8 @@ function closeReceipt() {
   const modal = document.getElementById("receiptModal");
   if (modal) {
     modal.style.display = "none";
-    // Clear cart after printing
     shop.clearCartCookies();
     shop.cart = [];
     shop.updateCartDisplay();
   }
 }
-
-async function recordTransaction(transactionData) {
-  try {
-    const user = JSON.parse(sessionStorage.getItem("currentUser"));
-    if (!user) {
-      alert("Anda harus login untuk melakukan transaksi.");
-      return;
-    }
-
-    const transaction = {
-      ...transactionData,
-      userId: user.username,
-      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-    };
-
-    await db.collection("transactions").add(transaction);
-    alert("Transaksi berhasil dicatat!");
-  } catch (error) {
-    console.error("Error mencatat transaksi:", error);
-    alert("Gagal mencatat transaksi. Silakan coba lagi.");
-  }
-}
-
-function handleCheckout(cartItems) {
-  if (!cartItems.length) {
-    alert("Keranjang belanja kosong.");
-    return;
-  }
-
-  const totalAmount = cartItems.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
-  const transactionData = {
-    items: cartItems,
-    totalAmount,
-  };
-
-  // Simpan transaksi ke Firestore
-  recordTransaction(transactionData);
-
-  // Kosongkan keranjang setelah checkout
-  CartManager.clearCart();
-  updateCartUI();
-}
-
-// Tambahkan event listener untuk tombol checkout
-document.querySelector(".btn-checkout").addEventListener("click", () => {
-  const cartItems = CartManager.getFromLocal();
-  handleCheckout(cartItems);
-});

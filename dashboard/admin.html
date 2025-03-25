@@ -155,12 +155,13 @@
           </div>
 
           <div class="stock-filters">
-            <select id="stockFilter">
+            <label for="stockFilter">Filter by Stock:</label>
+            <select id="stockFilter" title="Filter stock items">
               <option value="all">All Items</option>
               <option value="low">Low Stock</option>
               <option value="out">Out of Stock</option>
             </select>
-            <input type="text" id="stockSearch" placeholder="Search items..." />
+            <input type="text" id="stockSearch" placeholder="Search items..." title="Search stock items" />
           </div>
 
           <div class="stock-table">
@@ -173,8 +174,10 @@
           <div class="section-header">
             <h2>Transaction History</h2>
             <div class="transaction-filters">
-              <input type="date" id="startDate" />
-              <input type="date" id="endDate" />
+              <label for="startDate">Start Date:</label>
+              <input type="date" id="startDate" title="Select start date" />
+              <label for="endDate">End Date:</label>
+              <input type="date" id="endDate" title="Select end date" />
               <button onclick="adminManager.filterTransactions()">
                 Filter
               </button>
