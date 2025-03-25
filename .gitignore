@@ -18,10 +18,14 @@ firebase-debug.*.log
 *-firebase-adminsdk-*.json
 
 # Dependencies
-/node_modules
-/server/node_modules
+node_modules/
+/server/node_modules/
 
 # Build & cache
 /dist
 /build
 .cache
+
+# Git
+.git/
+.gitmodules
