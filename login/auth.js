@@ -102,9 +102,8 @@ function initGoogleSignIn() {
         provider.addScope("profile");
 
         const result = await firebase.auth().signInWithPopup(provider);
-        console.log("Google sign in success:", result);
 
-        // Create user object
+        // Buat objek user
         const user = {
           username: result.user.email,
           fullName: result.user.displayName,
@@ -114,21 +113,21 @@ function initGoogleSignIn() {
           photoURL: result.user.photoURL,
         };
 
-        // Store in localStorage
+        // Simpan ke localStorage untuk data persisten
         const existingUsers = JSON.parse(localStorage.getItem("users")) || [];
         if (!existingUsers.some((u) => u.email === user.email)) {
           existingUsers.push(user);
           localStorage.setItem("users", JSON.stringify(existingUsers));
         }
 
-        // Set session
+        // Set session untuk status login
         sessionStorage.setItem("currentUser", JSON.stringify(user));
 
-        // Redirect
+        // Redirect langsung ke halaman toko
         window.location.href = "../toko-belanja/index.html";
       } catch (error) {
-        console.error("Google Sign-In Error Details:", error);
-        alert(`Login gagal: ${error.message}`);
+        console.error("Google Sign-In Error:", error);
+        alert("Login gagal: " + error.message);
       }
     });
   }

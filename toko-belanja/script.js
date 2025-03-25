@@ -289,7 +289,7 @@ class ShopManager {
       // Persiapkan data transaksi
       const transactionData = {
         items: this.cart.map((item) => ({
-          id: item.id,
+          id: String(item.id), // Convert ID to string
           name: item.name,
           price: item.price,
           quantity: item.quantity,
@@ -313,10 +313,11 @@ class ShopManager {
 
       // Update stok hanya untuk produk statis
       for (const item of this.cart) {
-        if (item.id.startsWith("static_")) {
+        const itemId = String(item.id); // Convert ID to string
+        if (itemId.startsWith("static_")) {
           // Update stok di memori
           const productIndex = this.staticProducts.findIndex(
-            (p) => p.id === item.id
+            (p) => String(p.id) === itemId
           );
           if (productIndex !== -1) {
             this.staticProducts[productIndex].stock -= item.quantity;

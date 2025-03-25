@@ -6,13 +6,20 @@
     <title>User Profile - Tevxion</title>
     <link rel="stylesheet" href="dashboard.css" />
     <link rel="stylesheet" href="profile.css" />
-    <link rel="icon" href="/web/img/favicon.ico" type="image/x-icon" />
+    <link rel="icon" href="/img/favicon.ico" type="image/x-icon" />
     <link
       href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css"
       rel="stylesheet"
     />
+    <meta
+      http-equiv="Cross-Origin-Opener-Policy"
+      content="same-origin-allow-popups"
+    />
+    <meta http-equiv="Cross-Origin-Embedder-Policy" content="require-corp" />
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="../web/js/AuthManager.js"></script>
+    <script src="profile.js" defer></script>
   </head>
   <body>
     <nav>
@@ -38,7 +45,12 @@
       <div class="main-content">
         <div class="profile-container">
           <div class="profile-header">
-            <div class="profile-avatar"></div>
+            <div class="profile-avatar">
+              <img id="userAvatar" src="#" alt="Avatar" />
+              <div class="avatar-overlay">
+                <i class="bx bx-camera"></i>
+              </div>
+            </div>
             <h1>Profile</h1>
           </div>
 
@@ -68,6 +80,5 @@
       </div>
     </nav>
     <script src="dashboard.js"></script>
-    <script src="profile.js"></script>
   </body>
 </html>

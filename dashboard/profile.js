@@ -1,34 +1,56 @@
 class ProfileManager {
   constructor() {
-    this.currentSection = "personal";
     this.init();
   }
 
   async init() {
-    await this.loadUserData();
-    this.setupEventListeners();
-    this.loadSection(this.currentSection);
+    try {
+      await this.loadUserData();
+      this.setupEventListeners();
+    } catch (error) {
+      console.error("Kesalahan inisialisasi profil:", error);
+      alert("Gagal memuat data profil");
+    }
   }
 
   async loadUserData() {
     const user = AuthManager.getCurrentUser();
     if (!user) {
-      window.location.href = "../../login/login.html";
+      window.location.href = "../login/login.html";
       return;
     }
 
-    document.getElementById("userName").textContent =
-      user.fullName || user.username;
-    document.getElementById("userRole").textContent = user.role;
+    // Update elemen profil dengan aman
+    this.updateProfileElement("fullName", user.fullName || user.username);
+    this.updateProfileElement("username", user.username);
+    this.updateProfileElement("role", user.role);
+    this.updateProfileElement("email", user.email || "Belum diatur");
+    this.updateProfileElement("whatsapp", user.whatsapp || "Belum diatur");
 
-    // Load avatar if exists
-    const avatar = localStorage.getItem(`avatar_${user.username}`);
-    if (avatar) {
-      document.getElementById("userAvatar").src = avatar;
+    // Muat avatar jika ada
+    this.loadUserAvatar(user.username);
+  }
+
+  updateProfileElement(id, value) {
+    const element = document.getElementById(id);
+    if (element) {
+      element.textContent = value;
+    }
+  }
+
+  loadUserAvatar(username) {
+    const avatarImg = document.getElementById("userAvatar");
+    const avatarData = localStorage.getItem(`avatar_${username}`);
+
+    if (avatarImg && avatarData) {
+      avatarImg.src = avatarData;
+    } else if (avatarImg) {
+      avatarImg.src = "../web/img/default-avatar.png";
     }
   }
 
   setupEventListeners() {
+    // Add null checks and only attach listeners if elements exist
     document.querySelectorAll(".nav-item[data-section]").forEach((item) => {
       item.onclick = (e) => {
         e.preventDefault();
@@ -37,9 +59,11 @@ class ProfileManager {
       };
     });
 
-    // Avatar upload handler
-    document.querySelector(".avatar-overlay").onclick = () =>
-      this.handleAvatarUpload();
+    // Add null check for avatar-overlay
+    const avatarOverlay = document.querySelector(".avatar-overlay");
+    if (avatarOverlay) {
+      avatarOverlay.onclick = () => this.handleAvatarUpload();
+    }
   }
 
   async loadSection(sectionId) {
@@ -125,11 +149,14 @@ class ProfileManager {
   // Add more methods for handling different sections...
 }
 
-// Initialize profile manager
+// Inisialisasi ketika DOM siap
 document.addEventListener("DOMContentLoaded", () => {
-  window.profileManager = new ProfileManager();
+  if (typeof window.profileManager === "undefined") {
+    window.profileManager = new ProfileManager();
+  }
 });
 
+// Keep existing loadProfile function
 function loadProfile() {
   const user = JSON.parse(sessionStorage.getItem("currentUser"));
   if (!user) {
@@ -153,5 +180,3 @@ function loadProfile() {
   document.getElementById("whatsapp").textContent =
     profileData.whatsapp || "Not set";
 }
-
-document.addEventListener("DOMContentLoaded", loadProfile);
