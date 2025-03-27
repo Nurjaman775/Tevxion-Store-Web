@@ -12,22 +12,19 @@ body {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: #1a1a1a; /* Updated background color */
+  background: #232426;
 }
 
 .box {
   position: relative;
-  width: min(90%, 388px); /* Updated for better responsiveness */
-  min-height: 480px; /* Changed to min-height for better content fit */
-  height: auto; /* Allow height to adjust based on content */
-  background: #232426; /* Updated box background */
-  border-radius: clamp(8px, 2vw, 15px); /* Adjusted border radius */
+  width: 388px;
+  height: 480px; /* Increased height for Google Sign-In */
+  background: #1c1c1c;
+  border-radius: 12px; /* Increased border radius */
   overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); /* Enhanced shadow */
-  margin: clamp(10px, 2vh, 20px) auto; /* Add margin for smaller screens */
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3); /* Added shadow */
 }
 
-.box::before,
 .box::after {
   content: "";
   position: absolute;
@@ -35,35 +32,84 @@ body {
   left: -50%;
   width: 388px;
   height: 420px;
-  background: linear-gradient(0deg, transparent, transparent, #45f3ff, #45f3ff);
+  background: linear-gradient(
+    0deg,
+    transparent,
+    transparent,
+    #45f3ff,
+    #45f3ff,
+    #45f3ff
+  );
   z-index: 1;
   transform-origin: bottom right;
   animation: animate 6s linear infinite;
-}
-
-.box::after {
   animation-delay: -3s;
 }
-
-.borderLine::before,
-.borderLine::after {
+.box::before {
   content: "";
   position: absolute;
   top: -50%;
   left: -50%;
   width: 388px;
   height: 420px;
-  background: linear-gradient(0deg, transparent, transparent, #ff2770, #ff2770);
+  background: linear-gradient(
+    0deg,
+    transparent,
+    transparent,
+    #45f3ff,
+    #45f3ff,
+    #45f3ff
+  );
   z-index: 1;
   transform-origin: bottom right;
   animation: animate 6s linear infinite;
+}
+
+.borderLine {
+  position: absolute;
+  top: 0;
+  inset: 0;
 }
 
 .borderLine::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 388px;
+  height: 420px;
+  background: linear-gradient(
+    0deg,
+    transparent,
+    transparent,
+    #ff2770,
+    #ff2770,
+    #ff2770
+  );
+  z-index: 1;
+  transform-origin: bottom right;
+  animation: animate 6s linear infinite;
   animation-delay: -1.5s;
 }
 
 .borderLine::after {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 388px;
+  height: 420px;
+  background: linear-gradient(
+    0deg,
+    transparent,
+    transparent,
+    #ff2770,
+    #ff2770,
+    #ff2770
+  );
+  z-index: 1;
+  transform-origin: bottom right;
+  animation: animate 6s linear infinite;
   animation-delay: -4.5s;
 }
 
@@ -79,130 +125,109 @@ body {
 .box form {
   position: absolute;
   inset: 4px;
-  background: #1c1c1c; /* Updated form background */
-  padding: clamp(20px, 4vw, 50px) clamp(15px, 3vw, 40px); /* Responsive padding */
-  border-radius: 12px;
+  background: #222;
+  padding: 50px 40px;
+  border-radius: 8px;
   z-index: 2;
   display: flex;
   flex-direction: column;
-  min-height: calc(100% - 8px); /* Account for inset */
 }
 
 .box form h2 {
   color: #fff;
-  font-weight: 600;
+  font-weight: 500;
   text-align: center;
   letter-spacing: 0.1em;
-  margin-bottom: 20px;
 }
 
 .box form .inputBox {
   position: relative;
-  width: 100%;
-  margin-top: 25px;
+  width: 300px;
+  margin-top: 35px;
 }
 
 .box form .inputBox input {
+  position: relative;
   width: 100%;
-  padding: clamp(12px, 3vw, 15px) clamp(8px, 2vw, 10px);
+  padding: 20px 10px 10px;
   background: transparent;
-  border: 1px solid #45f3ff; /* Updated border color */
+  border: none;
   outline: none;
-  color: #fff;
-  font-size: clamp(14px, 4vw, 16px);
-  border-radius: 8px;
-  transition: 0.3s;
-}
-
-.box form .inputBox input:focus {
-  border-color: #ff2770; /* Focus color */
+  box-shadow: none;
+  color: #23242a;
+  font-size: 1em;
+  letter-spacing: 0.05em;
+  transition: 0.5s;
+  z-index: 10;
 }
 
 .box form .inputBox span {
   position: absolute;
-  left: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #8f8f8f;
-  font-size: 0.9em;
+  left: 0;
+  padding: 20px 0px 10px;
   pointer-events: none;
-  transition: 0.3s;
+  color: #8f8f8f;
+  font-size: 1em;
+  letter-spacing: 0.05em;
+  transition: 0.5s;
 }
 
-.box form .inputBox input:focus ~ span,
-.box form .inputBox input:valid ~ span {
-  top: -10px;
+.box form .inputBox input:valid ~ span,
+.box form .inputBox input:focus ~ span {
+  color: #fff;
   font-size: 0.75em;
-  color: #45f3ff;
+  transform: translateY(-34px);
+}
+.box form .inputBox i {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 2px;
+  background: #fff;
+  border-radius: 4px;
+  overflow: hidden;
+  transition: 0.5s;
+  pointer-events: none;
+}
+
+.box form .inputBox input:valid ~ i,
+.box form .inputBox input:focus ~ i {
+  height: 44px;
 }
 
 .box form .links {
   display: flex;
   justify-content: space-between;
-  margin-top: 15px;
 }
 
 .box form .links a {
-  font-size: 0.85em;
+  margin: 10px 0;
+  font-size: 0.75em;
   color: #8f8f8f;
   text-decoration: none;
-  transition: 0.3s;
 }
 
-.box form .links a:hover {
-  color: #45f3ff;
-}
-
-.box form input[type="submit"] {
-  border: none;
-  outline: none;
-  padding: 12px 20px;
-  background: #45f3ff;
-  color: #1c1c1c;
-  font-size: 1em;
-  border-radius: 8px;
-  font-weight: 600;
-  margin-top: 20px;
-  cursor: pointer;
-  transition: 0.3s;
-}
-
-.box form input[type="submit"]:hover {
-  background: #ff2770;
+.box form .links a:hover,
+.box form .links a:nth-child(2) {
   color: #fff;
 }
 
-.google-signin {
-  margin-top: 20px;
-  text-align: center;
-}
-
-.google-signin button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  width: 100%;
-  padding: 12px;
-  background: #fff;
+.box form .inputBox input[type="submit"] {
   border: none;
-  border-radius: 8px;
+  outline: none;
+  padding: 9px 25px;
+  background: #fff;
   cursor: pointer;
-  transition: 0.3s;
-  font-family: "Roboto", sans-serif;
-  font-size: 14px;
-  color: #757575;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  font-size: 0.9em;
+  border-radius: 4px;
+  font-weight: 600;
+  width: 100px;
+  margin-top: 10px;
 }
 
-.google-signin button:hover {
-  background: #f5f5f5;
-  transform: translateY(-2px);
-}
-
-.google-signin img {
-  width: 20px;
-  height: 20px;
+.box form input[type="submit"]:active {
+  opacity: 0.8;
 }
 
 .box .out {
@@ -216,159 +241,105 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 40px;
-  height: 40px;
-  background: rgba(69, 243, 255, 0.1);
-  border-radius: 8px;
-  color: #45f3ff;
+  width: 35px;
+  height: 35px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  color: #fff;
   text-decoration: none;
   transition: 0.3s;
-  font-size: 1.2em;
-  border: 1px solid rgba(69, 243, 255, 0.2);
 }
 
 .box .out a:hover {
-  background: #45f3ff;
-  color: #1c1c1c;
-  transform: translateX(-5px);
-  box-shadow: 0 0 20px rgba(69, 243, 255, 0.4);
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.1);
 }
 
 .box .out i {
-  font-size: 1.4em;
-  transition: 0.3s;
+  font-size: 1.2em;
 }
 
+.google-signin {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.google-signin button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  padding: 1;
+  background: #ffffff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: "Roboto", sans-serif;
+  font-size: 14px;
+  color: #757575;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.google-signin button:hover {
+  background: #f5f5f5;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+input::placeholder, .username {
+    color: rgba(0, 0, 0, 0.0);
+    opacity: 0.5;
+}
+
+.google-signin img {
+  width: 20px;
+  height: 20px;
+}
+
+
 @media screen and (max-width: 480px) {
-  body {
-    padding: 10px;
-    min-height: -webkit-fill-available; /* For iOS */
-  }
-
-  .box {
-    width: 100%;
-    margin: 10px auto;
-    min-height: calc(100vh - 20px);
-  }
-
   .box form {
-    padding: 20px 15px;
+    padding: 30px 15px;
   }
 
   .box form h2 {
-    font-size: clamp(1.2em, 5vw, 1.5em);
-    margin-bottom: 15px;
-  }
-
-  .box form .inputBox {
-    margin-top: 20px;
-    width: 100%;
+    font-size: 1.5em;
   }
 
   .box form .inputBox input {
-    font-size: 16px; /* Prevent zoom on mobile */
-    padding: 12px 8px;
-  }
-
-  .box form .links {
-    flex-wrap: wrap;
-    gap: 10px;
+    font-size: 0.9em;
   }
 
   .box form .links a {
-    font-size: 14px;
-  }
-
-  .box form input[type="submit"],
-  .google-signin button {
-    min-height: 44px; /* For better touch targets */
-    width: 100%;
-    margin-top: 15px;
-  }
-
-  .box .out a {
-    width: 44px;
-    height: 44px;
+    font-size: 0.7em;
   }
 }
 
-/* Add tablet support */
 @media screen and (min-width: 481px) and (max-width: 768px) {
   .box {
-    width: min(90%, 388px);
-    margin: 20px auto;
+    width: 80%;
   }
 }
 
-/* Tablet Optimization */
-@media screen and (min-width: 481px) and (max-width: 1024px) {
+@media screen and (min-width: 769px) and (max-width: 1024px) {
   .box {
-    width: min(70%, 388px);
-    margin: 20px auto;
-  }
-
-  .box form input[type="submit"],
-  .google-signin button {
-    padding: clamp(10px, 2vw, 12px) clamp(15px, 3vw, 20px);
+    width: 70%;
   }
 }
 
-/* Add landscape mode support */
-@media screen and (max-height: 600px) and (orientation: landscape) {
-  body {
-    align-items: flex-start;
-    padding: 20px 0;
-    min-height: 100vh;
-  }
-
+@media screen and (min-width: 1025px) {
   .box {
-    height: auto;
-    min-height: min(450px, calc(100vh - 40px));
-    margin: 10px auto;
+    width: 388px;
   }
 }
 
-/* High DPI screens */
-@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-  .box {
-    border-width: 0.5px;
-  }
-}
-
-/* Reduced motion preference */
-@media (prefers-reduced-motion: reduce) {
-  .box::before,
-  .box::after,
-  .borderLine::before,
-  .borderLine::after {
-    animation: none;
-    opacity: 0.5;
-  }
-}
-
-/* Reduced Motion */
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation: none !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-
-/* Notch Support */
-@supports (padding-top: env(safe-area-inset-top)) {
-  body {
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
-  }
-}
-
-/* Hover Support Check */
 @media (hover: none) {
-  .box form input[type="submit"]:hover,
-  .google-signin button:hover,
-  .box .out a:hover {
-    transform: none;
+  .box form .inputBox input:valid ~ span,
+  .box form .inputBox input:focus ~ span {
+    color: #fff;
+    font-size: 0.75em;
+    transform: translateY(-34px);
   }
 }
