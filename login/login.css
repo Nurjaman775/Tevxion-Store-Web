@@ -21,10 +21,10 @@ body {
   min-height: 480px; /* Changed to min-height for better content fit */
   height: auto; /* Allow height to adjust based on content */
   background: #232426; /* Updated box background */
-  border-radius: 15px; /* Adjusted border radius */
+  border-radius: clamp(8px, 2vw, 15px); /* Adjusted border radius */
   overflow: hidden;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); /* Enhanced shadow */
-  margin: 20px auto; /* Add margin for smaller screens */
+  margin: clamp(10px, 2vh, 20px) auto; /* Add margin for smaller screens */
 }
 
 .box::before,
@@ -80,7 +80,7 @@ body {
   position: absolute;
   inset: 4px;
   background: #1c1c1c; /* Updated form background */
-  padding: clamp(20px, 5vw, 50px) clamp(15px, 4vw, 40px); /* Responsive padding */
+  padding: clamp(20px, 4vw, 50px) clamp(15px, 3vw, 40px); /* Responsive padding */
   border-radius: 12px;
   z-index: 2;
   display: flex;
@@ -104,12 +104,12 @@ body {
 
 .box form .inputBox input {
   width: 100%;
-  padding: 15px 10px;
+  padding: clamp(12px, 3vw, 15px) clamp(8px, 2vw, 10px);
   background: transparent;
   border: 1px solid #45f3ff; /* Updated border color */
   outline: none;
   color: #fff;
-  font-size: 1em;
+  font-size: clamp(14px, 4vw, 16px);
   border-radius: 8px;
   transition: 0.3s;
 }
@@ -242,8 +242,9 @@ body {
 @media screen and (max-width: 480px) {
   body {
     padding: 10px;
+    min-height: -webkit-fill-available; /* For iOS */
   }
-  
+
   .box {
     width: 100%;
     margin: 10px auto;
@@ -278,23 +279,16 @@ body {
     font-size: 14px;
   }
 
-  .box form input[type="submit"] {
+  .box form input[type="submit"],
+  .google-signin button {
+    min-height: 44px; /* For better touch targets */
     width: 100%;
     margin-top: 15px;
   }
 
-  .google-signin {
-    width: 100%;
-  }
-
-  .google-signin button {
-    padding: 10px;
-    font-size: 14px;
-  }
-
   .box .out a {
-    width: 35px;
-    height: 35px;
+    width: 44px;
+    height: 44px;
   }
 }
 
@@ -306,18 +300,31 @@ body {
   }
 }
 
+/* Tablet Optimization */
+@media screen and (min-width: 481px) and (max-width: 1024px) {
+  .box {
+    width: min(70%, 388px);
+    margin: 20px auto;
+  }
+
+  .box form input[type="submit"],
+  .google-signin button {
+    padding: clamp(10px, 2vw, 12px) clamp(15px, 3vw, 20px);
+  }
+}
+
 /* Add landscape mode support */
 @media screen and (max-height: 600px) and (orientation: landscape) {
   body {
     align-items: flex-start;
     padding: 20px 0;
+    min-height: 100vh;
   }
 
   .box {
     height: auto;
-    min-height: calc(100vh - 40px);
+    min-height: min(450px, calc(100vh - 40px));
     margin: 10px auto;
-    min-height: 450px;
   }
 }
 
@@ -336,5 +343,32 @@ body {
   .borderLine::after {
     animation: none;
     opacity: 0.5;
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Notch Support */
+@supports (padding-top: env(safe-area-inset-top)) {
+  body {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+/* Hover Support Check */
+@media (hover: none) {
+  .box form input[type="submit"]:hover,
+  .google-signin button:hover,
+  .box .out a:hover {
+    transform: none;
   }
 }
