@@ -55,16 +55,49 @@ class ShopManager {
     this.loadCart();
     this.attachEventListeners();
     this.fetchProducts();
+
+    // Initialize stock storage if not exists
+    if (!localStorage.getItem("local_product_stocks")) {
+      const initialStocks = {};
+      this.staticProducts.forEach((p) => {
+        initialStocks[p.id] = p.stock;
+      });
+      localStorage.setItem(
+        "local_product_stocks",
+        JSON.stringify(initialStocks)
+      );
+    }
+
+    if (!localStorage.getItem("api_product_stocks")) {
+      localStorage.setItem("api_product_stocks", JSON.stringify({}));
+    }
   }
 
   async fetchProducts() {
     try {
-      // 1. Get local products
+      // Get stored stocks for local and static products
+      const storedLocalStocks =
+        JSON.parse(localStorage.getItem("local_product_stocks")) || {};
+      const storedApiStocks =
+        JSON.parse(localStorage.getItem("api_product_stocks")) || {};
+
+      // Update static products with stored stocks
+      this.staticProducts = this.staticProducts.map((product) => ({
+        ...product,
+        stock: storedLocalStocks[product.id] ?? product.stock,
+      }));
+
+      // Get local products and update their stocks
       const localProducts =
         JSON.parse(localStorage.getItem("store_products")) || [];
-      this.products = [...this.staticProducts, ...localProducts];
+      const updatedLocalProducts = localProducts.map((product) => ({
+        ...product,
+        stock: storedLocalStocks[product.id] ?? product.stock,
+      }));
 
-      // 2. Fetch API products separately
+      this.products = [...this.staticProducts, ...updatedLocalProducts];
+
+      // Fetch and update API products
       const response = await fetch("https://fakestoreapi.com/products");
       if (!response.ok) throw new Error("Network response was not ok");
 
@@ -80,16 +113,15 @@ class ShopManager {
         ).toISOString(),
         image: item.image,
         description: item.description,
-        stock: 10,
-        isApiProduct: true, // Flag to identify API products
+        stock: storedApiStocks[`api_${item.id}`] ?? 10,
+        isApiProduct: true,
       }));
 
-      // 3. Combine all products for display
+      // Combine all products for display
       this.filteredProducts = [...this.products, ...this.apiProducts];
       this.displayProducts();
     } catch (error) {
       console.error("Error fetching products:", error);
-      // If API fails, still show local products
       this.filteredProducts = [...this.products];
       this.displayProducts();
     }
@@ -289,10 +321,11 @@ class ShopManager {
       // Persiapkan data transaksi
       const transactionData = {
         items: this.cart.map((item) => ({
-          id: String(item.id), // Convert ID to string
+          id: String(item.id),
           name: item.name,
           price: item.price,
           quantity: item.quantity,
+          isApiProduct: item.id.startsWith("api_"),
         })),
         total: this.calculateTotal(),
         customerInfo: {
@@ -302,36 +335,27 @@ class ShopManager {
         status: "completed",
       };
 
+      // Update stock di Firestore dan API
+      const stockUpdatePromises = this.cart.map(async (item) => {
+        if (item.id.startsWith("api_")) {
+          // Update stock untuk produk API
+          await this.updateApiProductStock(item);
+        } else {
+          // Update stock untuk produk lokal
+          await this.updateLocalProductStock(item);
+        }
+      });
+
+      // Tunggu semua update stock selesai
+      await Promise.all(stockUpdatePromises);
+
       // Simpan transaksi ke Firestore
       const db = firebase.firestore();
       const transactionRef = await db
         .collection("transactions")
         .add(transactionData);
 
-      // Handle static products and API products differently
-      const batch = db.batch();
-
-      // Update stok hanya untuk produk statis
-      for (const item of this.cart) {
-        const itemId = String(item.id); // Convert ID to string
-        if (itemId.startsWith("static_")) {
-          // Update stok di memori
-          const productIndex = this.staticProducts.findIndex(
-            (p) => String(p.id) === itemId
-          );
-          if (productIndex !== -1) {
-            this.staticProducts[productIndex].stock -= item.quantity;
-          }
-
-          // Simpan perubahan stok ke localStorage
-          localStorage.setItem(
-            "staticProducts",
-            JSON.stringify(this.staticProducts)
-          );
-        }
-      }
-
-      // Tampilkan struk
+      // Update tampilan
       this.showReceipt({
         ...transactionData,
         transactionId: transactionRef.id,
@@ -343,10 +367,93 @@ class ShopManager {
       this.updateCartDisplay();
       this.closeCart();
 
+      // Refresh products display
+      await this.fetchProducts();
+
       alert("Transaksi berhasil!");
     } catch (error) {
       console.error("Error checkout:", error);
       alert("Gagal melakukan checkout: " + error.message);
+    }
+  }
+
+  async updateLocalProductStock(item) {
+    try {
+      // Get current stocks from localStorage
+      const storedStocks =
+        JSON.parse(localStorage.getItem("local_product_stocks")) || {};
+
+      // Calculate new stock
+      const currentStock =
+        storedStocks[item.id] ?? this.findProductStock(item.id);
+      const newStock = currentStock - item.quantity;
+
+      if (newStock < 0) {
+        throw new Error(`Insufficient stock for ${item.name}`);
+      }
+
+      // Update stock in localStorage
+      storedStocks[item.id] = newStock;
+      localStorage.setItem(
+        "local_product_stocks",
+        JSON.stringify(storedStocks)
+      );
+
+      // Update local state
+      if (this.isStaticProduct(item.id)) {
+        this.staticProducts = this.staticProducts.map((p) => {
+          if (p.id === item.id) {
+            return { ...p, stock: newStock };
+          }
+          return p;
+        });
+      } else {
+        const localProducts =
+          JSON.parse(localStorage.getItem("store_products")) || [];
+        const updatedProducts = localProducts.map((p) => {
+          if (p.id === item.id) {
+            return { ...p, stock: newStock };
+          }
+          return p;
+        });
+        localStorage.setItem("store_products", JSON.stringify(updatedProducts));
+      }
+
+      // Update filtered products
+      this.filteredProducts = this.filteredProducts.map((p) => {
+        if (p.id === item.id) {
+          return { ...p, stock: newStock };
+        }
+        return p;
+      });
+    } catch (error) {
+      console.error(`Failed to update local product stock: ${item.id}`, error);
+      throw new Error(`Failed to update stock for ${item.name}`);
+    }
+  }
+
+  async updateApiProductStock(item) {
+    const originalId = item.id.replace("api_", "");
+
+    try {
+      // Update local state for API products
+      this.apiProducts = this.apiProducts.map((p) => {
+        if (p.id === item.id) {
+          const newStock = p.stock - item.quantity;
+          return { ...p, stock: newStock };
+        }
+        return p;
+      });
+
+      // Store updated API product stocks in localStorage
+      const apiStockKey = "api_product_stocks";
+      const storedStocks = JSON.parse(localStorage.getItem(apiStockKey)) || {};
+      storedStocks[item.id] =
+        this.apiProducts.find((p) => p.id === item.id)?.stock || 0;
+      localStorage.setItem(apiStockKey, JSON.stringify(storedStocks));
+    } catch (error) {
+      console.error(`Failed to update API product stock: ${item.id}`, error);
+      throw new Error(`Failed to update stock for ${item.name}`);
     }
   }
 
@@ -979,6 +1086,15 @@ class ShopManager {
       setTimeout(() => cartDropdown.remove(), 300);
     }
     this.isCartOpen = false;
+  }
+
+  isStaticProduct(productId) {
+    return this.staticProducts.some((p) => p.id === productId);
+  }
+
+  findProductStock(productId) {
+    const product = this.filteredProducts.find((p) => p.id === productId);
+    return product?.stock ?? 0;
   }
 }
 

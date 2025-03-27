@@ -83,7 +83,7 @@ function handleLoginRedirect(role) {
       window.location.href = "../dashboard/admin.html";
       break;
     case "cashier":
-      window.location.href = "../dashboard/cashier.html";
+      window.location.href = "../dashboard/cashier/stock-management.html";
       break;
     case "customer":
       window.location.href = "../toko-belanja/index.html";

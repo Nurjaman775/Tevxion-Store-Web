@@ -12,37 +12,48 @@ document.addEventListener("DOMContentLoaded", function () {
     measurementId: "G-ZYMZJW3T2H",
   };
 
-  // Initialize Firebase only if not already initialized
-  if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
+  try {
+    // Initialize Firebase only if not already initialized
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
 
-    // Add CORS and Popup settings
-    firebase.auth().settings.appVerificationDisabledForTesting = true;
-    firebase.auth().useDeviceLanguage();
+      // Initialize services with proper error handling
+      try {
+        // Initialize auth
+        const auth = firebase.auth();
+        auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+        window.auth = auth;
+        console.log("Auth initialized");
 
-    // Configure auth persistence
-    firebase
-      .auth()
-      .setPersistence(firebase.auth.Auth.Persistence.LOCAL)
-      .catch((error) => console.error("Auth persistence error:", error));
+        // Initialize Firestore with new cache settings
+        const db = firebase.firestore();
+        db.settings({
+          cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED,
+          merge: true,
+          cache: {
+            persistenceEnabled: true,
+            tabSynchronization: true,
+          },
+        });
 
-    // Initialize services
-    const db = firebase.firestore();
-    const auth = firebase.auth();
-    const rtdb = firebase.database();
+        window.db = db;
+        console.log("Firestore initialized with cache settings");
 
-    // Only initialize analytics if the function exists
-    let analytics = null;
-    if (typeof firebase.analytics === "function") {
-      analytics = firebase.analytics();
+        // Initialize Storage with error checking
+        if (typeof firebase.storage === "function") {
+          const storage = firebase.storage();
+          window.storage = storage;
+          console.log("Storage initialized");
+        } else {
+          console.warn("Firebase Storage SDK not loaded properly");
+        }
+
+        console.log("Firebase services initialized successfully");
+      } catch (serviceError) {
+        console.error("Error initializing Firebase services:", serviceError);
+      }
     }
-
-    // Make available globally
-    window.db = db;
-    window.auth = auth;
-    window.rtdb = rtdb;
-    if (analytics) window.analytics = analytics;
-
-    console.log("Firebase initialized successfully");
+  } catch (error) {
+    console.error("Firebase initialization error:", error);
   }
 });

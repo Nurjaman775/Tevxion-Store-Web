@@ -1,182 +1,299 @@
+let profileManagerInstance = null;
+
 class ProfileManager {
   constructor() {
+    // Singleton pattern
+    if (profileManagerInstance) {
+      return profileManagerInstance;
+    }
+    profileManagerInstance = this;
+
+    // Initialize manager
     this.init();
   }
 
   async init() {
-    try {
-      await this.loadUserData();
-      this.setupEventListeners();
-    } catch (error) {
-      console.error("Kesalahan inisialisasi profil:", error);
-      alert("Gagal memuat data profil");
-    }
-  }
-
-  async loadUserData() {
-    const user = AuthManager.getCurrentUser();
-    if (!user) {
+    this.currentUser = JSON.parse(sessionStorage.getItem("currentUser"));
+    if (!this.currentUser) {
       window.location.href = "../login/login.html";
       return;
     }
 
-    // Update elemen profil dengan aman
-    this.updateProfileElement("fullName", user.fullName || user.username);
-    this.updateProfileElement("username", user.username);
-    this.updateProfileElement("role", user.role);
-    this.updateProfileElement("email", user.email || "Belum diatur");
-    this.updateProfileElement("whatsapp", user.whatsapp || "Belum diatur");
-
-    // Muat avatar jika ada
-    this.loadUserAvatar(user.username);
+    this.initializeElements();
+    this.loadUserProfile();
+    this.attachEventListeners();
+    this.hasUnsavedChanges = false;
   }
 
-  updateProfileElement(id, value) {
-    const element = document.getElementById(id);
-    if (element) {
-      element.textContent = value;
-    }
+  initializeElements() {
+    this.profilePhoto = document.getElementById("profilePhoto");
+    // Add error handler for profile photo
+    this.profilePhoto.onerror = () => {
+      this.profilePhoto.src = "../../img/default-avatar.png";
+    };
+    this.photoInput = document.getElementById("photoInput");
+    this.usernameInput = document.getElementById("username");
+    this.emailInput = document.getElementById("email");
+    this.whatsappInput = document.getElementById("whatsapp");
+    this.saveButton = document.getElementById("saveProfile");
+    this.displayName = document.getElementById("displayName");
+    this.logoutBtn = document.getElementById("logoutBtn");
+    this.removePhotoBtn = document.getElementById("removePhotoBtn");
+
+    // Set default photo path
+    this.defaultPhotoPath = "../../img/default-avatar.png";
+
+    // Add error handler for profile photo
+    this.profilePhoto.onerror = () => {
+      this.profilePhoto.src = this.defaultPhotoPath;
+    };
   }
 
-  loadUserAvatar(username) {
-    const avatarImg = document.getElementById("userAvatar");
-    const avatarData = localStorage.getItem(`avatar_${username}`);
+  attachEventListeners() {
+    this.photoInput.addEventListener("change", (e) =>
+      this.handlePhotoChange(e)
+    );
+    this.saveButton.addEventListener("click", () => this.saveProfile());
 
-    if (avatarImg && avatarData) {
-      avatarImg.src = avatarData;
-    } else if (avatarImg) {
-      avatarImg.src = "../web/img/default-avatar.png";
-    }
-  }
-
-  setupEventListeners() {
-    // Add null checks and only attach listeners if elements exist
-    document.querySelectorAll(".nav-item[data-section]").forEach((item) => {
-      item.onclick = (e) => {
-        e.preventDefault();
-        const section = item.dataset.section;
-        this.loadSection(section);
-      };
+    // Add validation for WhatsApp number
+    this.whatsappInput.addEventListener("input", (e) => {
+      e.target.value = e.target.value.replace(/[^0-9]/g, "");
     });
 
-    // Add null check for avatar-overlay
-    const avatarOverlay = document.querySelector(".avatar-overlay");
-    if (avatarOverlay) {
-      avatarOverlay.onclick = () => this.handleAvatarUpload();
+    // Track changes
+    ["usernameInput", "emailInput", "whatsappInput"].forEach((inputId) => {
+      this[inputId].addEventListener("input", () => {
+        this.hasUnsavedChanges = true;
+      });
+    });
+
+    // Logout handler
+    this.logoutBtn.addEventListener("click", () => this.handleLogout());
+
+    // Warn about unsaved changes
+    window.addEventListener("beforeunload", (e) => {
+      if (this.hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    });
+
+    // Add remove photo handler
+    this.removePhotoBtn.addEventListener("click", () =>
+      this.handleRemovePhoto()
+    );
+  }
+
+  loadUserProfile() {
+    try {
+      const userProfile =
+        JSON.parse(
+          localStorage.getItem(`userProfile_${this.currentUser.uid}`)
+        ) || {};
+
+      // Update UI with saved data
+      this.usernameInput.value =
+        userProfile.username || this.currentUser.username || "";
+      this.emailInput.value = userProfile.email || this.currentUser.email || "";
+      this.whatsappInput.value = userProfile.whatsapp || "";
+      this.displayName.textContent =
+        userProfile.username || this.currentUser.username || "User";
+
+      // Load saved photo if exists
+      if (userProfile.photoURL) {
+        this.profilePhoto.src = userProfile.photoURL;
+      }
+    } catch (error) {
+      console.error("Error loading profile:", error);
+      this.showNotification("Error loading profile", "error");
     }
   }
 
-  async loadSection(sectionId) {
-    const main = document.querySelector(".main-content");
-    main.innerHTML = '<div class="loading">Loading...</div>';
+  async handlePhotoChange(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Validate file type and size
+    if (!file.type.startsWith("image/")) {
+      this.showNotification(
+        "File harus berupa gambar (JPG, PNG, dll)",
+        "error"
+      );
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      // 5MB limit
+      this.showNotification("Ukuran foto maksimal 5MB", "error");
+      return;
+    }
 
     try {
-      const response = await fetch(`./sections/${sectionId}.html`);
-      const content = await response.text();
-      main.innerHTML = content;
+      this.saveButton.disabled = true;
+      this.showNotification("Sedang mengupload foto...", "info");
 
-      this.updateActiveNav(sectionId);
-      this.initializeSectionFeatures(sectionId);
-    } catch (error) {
-      main.innerHTML = '<div class="error">Failed to load content</div>';
-    }
-  }
-
-  async initializeSectionFeatures(sectionId) {
-    switch (sectionId) {
-      case "personal":
-        await this.initializePersonalInfo();
-        break;
-      case "security":
-        this.initializeSecuritySettings();
-        break;
-      case "addresses":
-        await this.loadAddresses();
-        break;
-      case "orders":
-        await this.loadOrderHistory();
-        break;
-      // Add more section initializations...
-    }
-  }
-
-  async handleAvatarUpload() {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "image/*";
-
-    input.onchange = async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      try {
-        const base64 = await this.convertToBase64(file);
-        document.getElementById("userAvatar").src = base64;
-
-        const user = AuthManager.getCurrentUser();
-        localStorage.setItem(`avatar_${user.username}`, base64);
-
-        this.showNotification(
-          "Profile picture updated successfully",
-          "success"
-        );
-      } catch (error) {
-        this.showNotification("Failed to update profile picture", "error");
-      }
-    };
-
-    input.click();
-  }
-
-  convertToBase64(file) {
-    return new Promise((resolve, reject) => {
+      // Convert image to base64
       const reader = new FileReader();
+      reader.onload = (e) => {
+        const photoURL = e.target.result;
+        this.profilePhoto.src = photoURL;
+
+        // Save to localStorage
+        const userProfile =
+          JSON.parse(
+            localStorage.getItem(`userProfile_${this.currentUser.uid}`)
+          ) || {};
+        userProfile.photoURL = photoURL;
+        localStorage.setItem(
+          `userProfile_${this.currentUser.uid}`,
+          JSON.stringify(userProfile)
+        );
+
+        this.showNotification("Foto profil berhasil diperbarui");
+      };
       reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = (error) => reject(error);
-    });
+    } catch (error) {
+      console.error("Error uploading photo:", error);
+      this.showNotification("Gagal mengupload foto profil", "error");
+    } finally {
+      this.saveButton.disabled = false;
+    }
   }
 
-  showNotification(message, type = "info") {
-    const notification = document.createElement("div");
-    notification.className = `notification ${type}`;
-    notification.textContent = message;
+  async handleRemovePhoto() {
+    try {
+      if (confirm("Apakah Anda yakin ingin menghapus foto profil?")) {
+        // Reset photo to default
+        this.profilePhoto.src = this.defaultPhotoPath;
 
-    document.body.appendChild(notification);
-    setTimeout(() => notification.remove(), 3000);
+        // Update local storage
+        const userProfile =
+          JSON.parse(
+            localStorage.getItem(`userProfile_${this.currentUser.uid}`)
+          ) || {};
+        userProfile.photoURL = this.defaultPhotoPath;
+        localStorage.setItem(
+          `userProfile_${this.currentUser.uid}`,
+          JSON.stringify(userProfile)
+        );
+
+        this.hasUnsavedChanges = true;
+        this.showNotification("Foto profil berhasil dihapus");
+      }
+    } catch (error) {
+      console.error("Error removing photo:", error);
+      this.showNotification("Gagal menghapus foto profil", "error");
+    }
   }
 
-  // Add more methods for handling different sections...
-}
+  async saveProfile() {
+    try {
+      // Basic validation
+      const username = this.usernameInput.value.trim();
+      const email = this.emailInput.value.trim();
+      const whatsapp = this.whatsappInput.value.trim();
 
-// Inisialisasi ketika DOM siap
-document.addEventListener("DOMContentLoaded", () => {
-  if (typeof window.profileManager === "undefined") {
-    window.profileManager = new ProfileManager();
+      if (!username || !email) {
+        this.showNotification(
+          "Mohon lengkapi semua field yang diperlukan",
+          "error"
+        );
+        return;
+      }
+
+      if (!this.validateEmail(email)) {
+        this.showNotification("Format email tidak valid", "error");
+        return;
+      }
+
+      this.saveButton.disabled = true;
+      this.saveButton.classList.add("saving");
+      this.showNotification("Sedang menyimpan perubahan...", "info");
+
+      // Save to localStorage
+      const userProfile = {
+        username,
+        email,
+        whatsapp,
+        photoURL: this.profilePhoto.src,
+        updatedAt: new Date().toISOString(),
+      };
+      localStorage.setItem(
+        `userProfile_${this.currentUser.uid}`,
+        JSON.stringify(userProfile)
+      );
+
+      // Update session storage
+      const updatedUser = { ...this.currentUser, username, email };
+      sessionStorage.setItem("currentUser", JSON.stringify(updatedUser));
+      localStorage.setItem("currentUser", JSON.stringify(updatedUser));
+
+      this.displayName.textContent = username;
+      this.hasUnsavedChanges = false;
+      this.showNotification("Profil Anda berhasil diperbarui");
+    } catch (error) {
+      console.error("Error saving profile:", error);
+      this.showNotification("Terjadi kesalahan saat menyimpan profil", "error");
+    } finally {
+      this.saveButton.disabled = false;
+      this.saveButton.classList.remove("saving");
+    }
   }
-});
 
-// Keep existing loadProfile function
-function loadProfile() {
-  const user = JSON.parse(sessionStorage.getItem("currentUser"));
-  if (!user) {
+  async handleLogout() {
+    if (this.hasUnsavedChanges) {
+      const confirm = window.confirm(
+        "You have unsaved changes. Do you want to save them before logging out?"
+      );
+      if (confirm) {
+        await this.saveProfile();
+      }
+    }
+
+    sessionStorage.removeItem("currentUser");
+    localStorage.removeItem("currentUser");
     window.location.href = "../login/login.html";
-    return;
   }
 
-  const profileData =
-    JSON.parse(localStorage.getItem("users")).find(
-      (u) => u.username === user.username
-    ) || user;
+  validateEmail(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
 
-  // Set profile info
-  document.querySelector(".profile-avatar").textContent =
-    user.username[0].toUpperCase();
-  document.getElementById("fullName").textContent =
-    profileData.fullName || user.username;
-  document.getElementById("username").textContent = user.username;
-  document.getElementById("role").textContent = user.role;
-  document.getElementById("email").textContent = profileData.email || "Not set";
-  document.getElementById("whatsapp").textContent =
-    profileData.whatsapp || "Not set";
+  showNotification(message, type = "success") {
+    const notification = document.getElementById("notification");
+    let icon = "";
+    let title = "";
+
+    switch (type) {
+      case "success":
+        icon = '<i class="fas fa-check-circle"></i>';
+        title = "Berhasil! ";
+        break;
+      case "error":
+        icon = '<i class="fas fa-exclamation-circle"></i>';
+        title = "Gagal! ";
+        break;
+      case "info":
+        icon = '<i class="fas fa-info-circle"></i>';
+        title = "Info: ";
+        break;
+    }
+
+    notification.innerHTML = `${icon}<div><strong>${title}</strong>${message}</div>`;
+    notification.className = `notification ${type}`;
+    notification.classList.add("show");
+
+    // Remove notification after delay
+    setTimeout(() => {
+      notification.classList.remove("show");
+      setTimeout(() => {
+        notification.innerHTML = "";
+      }, 300);
+    }, 3000);
+  }
 }
+
+// Initialize only after DOM is ready
+document.addEventListener("DOMContentLoaded", () => {
+  new ProfileManager();
+});
