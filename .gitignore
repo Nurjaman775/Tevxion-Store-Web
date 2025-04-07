@@ -1,5 +1,5 @@
 .env
-/config/firebase.js
+/config/firebase-config.js
 /rules/firestore.rules
 /rules/storage.rules
 /rules/database.rules.json
