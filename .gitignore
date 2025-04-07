@@ -1,0 +1,7 @@
+.env
+/config/firebase.js
+/rules/firestore.rules
+/rules/storage.rules
+/rules/database.rules.json
+/login/login.html
+/login1/login1.html

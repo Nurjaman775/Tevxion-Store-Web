@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="msapplication-navbutton-color" content="#1c1c1c" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="#1c1c1c" />
+    <title>Admin Dashboard - Tevxion Store</title>
+    <link rel="stylesheet" href="admin.css" />
+    <link
+      href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css"
+      rel="stylesheet"
+    />
+    <link rel="icon" href="/img/favicon.ico" type="image/x-icon" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body>
+    <div id="errorContainer" class="error-container"></div>
+    <div class="admin-container">
+      <!-- Sidebar -->
+      <nav class="admin-sidebar" id="adminSidebar">
+        <div class="sidebar-header">
+          <!-- Add toggle button -->
+          <img
+            src="/img/Handphone.jpg"
+            alt="Logo"
+            class="admin-logo"
+            onerror="this.onerror=null; this.src='../../img/default-logo.png'; this.classList.add('fallback-logo')"
+          />
+          <h2>Admin Panel</h2>
+        </div>
+
+        <ul class="nav-menu">
+          <!-- Primary Menu -->
+          <li data-section="dashboard" class="active">
+            <i class="bx bxs-dashboard"></i>
+            <span><a href="admin.html"> Dashboard</a></span>
+          </li>
+
+          <!-- Product Management -->
+          <li data-section="products">
+            <i class="bx bx-package"></i>
+            <span>Produk</span>
+          </li>
+          <li data-section="categories">
+            <i class="bx bx-category"></i>
+            <span>Kategori</span>
+          </li>
+
+          <!-- Order Management -->
+          <li data-section="orders">
+            <i class="bx bx-cart"></i>
+            <span>Pesanan</span>
+          </li>
+          <li data-section="shipping">
+            <i class="bx bx-transfer"></i>
+            <span>Pengiriman</span>
+          </li>
+
+          <!-- User Management -->
+          <li data-section="users">
+            <i class="bx bx-user"></i>
+            <span>Pengguna</span>
+          </li>
+          <li data-section="reviews">
+            <i class="bx bx-message-square-detail"></i>
+            <span>Review</span>
+          </li>
+
+          <!-- Reports & Settings -->
+          <li data-section="analytics">
+            <i class="bx bx-line-chart"></i>
+            <span>Laporan</span>
+          </li>
+          <li data-section="store">
+            <i class="bx bx-store"></i>
+            <span>Pengaturan Toko</span>
+          </li>
+        </ul>
+
+        <div class="admin-profile">
+          <img
+            src="/img/default-avatar.png"
+            alt="Admin"
+            id="adminAvatar"
+            class="loading"
+            onerror="this.onerror=null; this.src='../../img/default-avatar.png'; this.classList.remove('loading')"
+            onload="this.classList.remove('loading')"
+          />
+          <div class="admin-info">
+            <h4 id="adminName">Admin Name</h4>
+            <button onclick="logout()" class="logout-btn" title="Logout">
+              <i class="bx bx-log-out"></i> Logout
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      <!-- Main Content Area -->
+      <main class="admin-content">
+        <div class="dashboard-wrapper">
+          <!-- Dashboard Section -->
+          <section id="dashboard" class="admin-section active">
+            <div class="section-header">
+              <h2><i class="bx bxs-dashboard"></i> Dashboard Overview</h2>
+              <div class="date-filter">
+                <label for="startDate">Start Date:</label>
+                <input
+                  type="date"
+                  id="startDate"
+                  placeholder="Select start date"
+                  title="Start date"
+                />
+                <label for="endDate">End Date:</label>
+                <input
+                  type="date"
+                  id="endDate"
+                  placeholder="Select end date"
+                  title="End date"
+                />
+              </div>
+            </div>
+
+            <div class="stats-grid">
+              <div class="stat-card">
+                <div class="stat-icon">
+                  <i class="bx bx-package"></i>
+                </div>
+                <h3>Total Produk</h3>
+                <div class="stat-value">0</div>
+                <div class="stat-details">
+                  <span class="stat-label">Tersedia:</span>
+                  <span class="stock-count">0</span>
+                  <span class="stat-label">| Habis:</span>
+                  <span class="outofstock-count">0</span>
+                </div>
+              </div>
+
+              <div class="stat-card">
+                <div class="stat-icon"><i class="bx bx-user"></i></div>
+                <h3>Total Users</h3>
+                <div class="stat-value">0</div>
+                <div class="stat-details">Loading...</div>
+              </div>
+
+              <div class="stat-card">
+                <div class="stat-icon"><i class="bx bx-money"></i></div>
+                <h3>Total Revenue</h3>
+                <div class="stat-value">Rp 0</div>
+                <div class="stat-details">Loading...</div>
+              </div>
+            </div>
+
+            <div class="charts-container">
+              <!-- Charts will be inserted here -->
+            </div>
+          </section>
+        </div>
+      </main>
+
+      <!-- Product Management Section -->
+      <section id="products" class="admin-section">
+        <!-- Product management content -->
+      </section>
+
+      <!-- Orders Section -->
+      <section id="orders" class="admin-section">
+        <!-- Order management content -->
+      </section>
+
+      <!-- Users Section -->
+      <section id="users" class="admin-section">
+        <!-- User management content -->
+      </section>
+
+      <!-- Payments Section -->
+      <section id="payments" class="admin-section">
+        <!-- Payment management content -->
+      </section>
+
+      <!-- Shipping Section -->
+      <section id="shipping" class="admin-section">
+        <!-- Shipping management content -->
+      </section>
+
+      <!-- Analytics Section -->
+      <section id="analytics" class="admin-section">
+        <!-- Analytics content -->
+      </section>
+
+      <!-- Store Settings -->
+      <section id="store" class="admin-section">
+        <!-- Store settings content -->
+      </section>
+
+      <!-- Promos Section -->
+      <section id="promos" class="admin-section">
+        <!-- Promo management content -->
+      </section>
+
+      <!-- Reviews Section -->
+      <section id="reviews" class="admin-section">
+        <!-- Review management content -->
+      </section>
+
+      <!-- Notifications Section -->
+      <section id="notifications" class="admin-section">
+        <!-- Notification settings content -->
+      </section>
+
+      <!-- Transactions Section -->
+      <section id="transactions" class="admin-section">
+        <div class="section-header">
+          <h2>Riwayat Transaksi</h2>
+          <div class="filters">
+            <select id="statusFilter" title="Filter Status">
+              <option value="all">Semua Status</option>
+              <option value="completed">Selesai</option>
+              <option value="pending">Pending</option>
+              <option value="cancelled">Dibatalkan</option>
+            </select>
+            <div class="date-range">
+              <input
+                type="date"
+                id="transStartDate"
+                placeholder="Tanggal Awal"
+                title="Tanggal Awal"
+              />
+              <input
+                type="date"
+                id="transEndDate"
+                placeholder="Tanggal Akhir"
+                title="Tanggal Akhir"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="transactions-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>ID Transaksi</th>
+                <th>Tanggal</th>
+                <th>Customer</th>
+                <th>Total Items</th>
+                <th>Total Harga</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="transactionsTableBody">
+              <!-- Transaction data will be inserted here -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay hidden" id="loadingOverlay">
+      <div class="loading-spinner"></div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
+
+    <!-- Config -->
+    <script src="/config/firebase-config.js"></script>
+
+    <!-- Update initialization check -->
+    <script>
+      async function initializeApp() {
+        try {
+          showLoading();
+
+          // Wait for Firebase initialization
+          await new Promise((resolve) => {
+            const checkFirebase = setInterval(() => {
+              if (firebase.apps.length) {
+                clearInterval(checkFirebase);
+                resolve();
+              }
+            }, 100);
+          });
+
+          // Load required scripts sequentially
+          await loadScript("./monitoring.js");
+          await loadScript("./modules/notification-manager.js");
+          await loadScript("./admin.js");
+
+          hideLoading();
+        } catch (error) {
+          console.error("Initialization error:", error);
+          handleScriptError(error);
+        }
+      }
+
+      function showLoading() {
+
+        document.getElementById("loadingOverlay").classList.remove("hidden");
+      }
+
+      function hideLoading() {
+
+        document.getElementById("loadingOverlay").classList.add("hidden");
+      }
+
+      function handleScriptError(error) {
+        console.error("Script loading error:", error);
+        hideLoading();
+        const errorContainer = document.getElementById("errorContainer");
+        if (errorContainer) {
+          errorContainer.innerHTML = `
+            <div class="error-message">
+              Failed to load dashboard. Please check your connection and refresh.
+              <button onclick="window.location.reload()">Refresh</button>
+            </div>
+          `;
+        }
+      }
+
+      function loadScript(src) {
+        return new Promise((resolve, reject) => {
+          const script = document.createElement("script");
+          script.src = src;
+          script.onload = resolve;
+          script.onerror = reject;
+          document.body.appendChild(script);
+        });
+      }
+
+      // Start initialization
+      document.addEventListener("DOMContentLoaded", initializeApp);
+
+    </script>  </body>
+</html>

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="customer.css" />
+    <link rel="icon" href="/img/favicon.ico" type="image/x-icon" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/fontawesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/brands.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/solid.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/svg-with-js.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/v4-shims.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/fontawesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet" />
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+    <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin-allow-popups" />
+    <meta http-equiv="Cross-Origin-Embedder-Policy" content="require-corp" />
+    <link rel="icon" href="/img/favicon.ico" type="image/x-icon" />
+    <title>User Profile - Tevxion</title>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <a href="javascript:history.back()" class="back-btn">
+          <i class="fas fa-arrow-left"></i> Kembali
+        </a>
+        <h1>Profil Saya</h1>
+        <button id="logoutBtn" class="logout-btn">
+          <i class="fas fa-sign-out-alt"></i> Logout
+        </button>
+      </header>
+
+      <div class="profile-container">
+        <div class="profile-header">
+          <div class="profile-photo-container">
+            <img
+              src="/img/default-avatar.png"
+              alt="Profile Photo"
+              id="profilePhoto"
+            />
+            <div class="photo-overlay">
+              <label
+                for="photoInput"
+                class="change-photo-btn"
+                title="Upload foto baru"
+              >
+                <i class="fas fa-camera"></i>
+              </label>
+              <button
+                class="remove-photo-btn"
+                id="removePhotoBtn"
+                title="Hapus foto"
+              >
+                <i class="fas fa-trash"></i>
+              </button>
+              <input type="file" id="photoInput" accept="image/*" hidden />
+            </div>
+          </div>
+          <div class="profile-info">
+            <h2 id="displayName">Loading...</h2>
+            <p id="userRole" class="user-role">Member</p>
+          </div>
+        </div>
+
+        <div class="profile-form">
+          <div class="form-group">
+            <label for="username">
+              <i class="fas fa-user"></i>
+              <span class="label-text">Username</span>
+            </label>
+            <input
+              type="text"
+              id="username"
+              placeholder="Masukkan username"
+              autocomplete="username"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="email">
+              <i class="fas fa-envelope"></i>
+              <span class="label-text">Email</span>
+            </label>
+            <input
+              type="email"
+              id="email"
+              placeholder="Masukkan email"
+              autocomplete="email"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="whatsapp">
+              <i class="fab fa-whatsapp"></i>
+              <span class="label-text">WhatsApp</span>
+            </label>
+            <input
+              type="tel"
+              id="whatsapp"
+              placeholder="Contoh: 081234567890"
+              autocomplete="tel"
+              pattern="[0-9]*"
+            />
+          </div>
+
+          <button id="saveProfile" class="save-btn">
+            <i class="fas fa-save"></i>
+            <span class="btn-text">Simpan Perubahan</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notification -->
+    <div id="notification" class="notification"></div>
+
+    <!-- Firebase SDKs - Update this section -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    <script src="/config/firebase-config.js"></script>
+    <script src="/config/AuthManager.js" defer></script>
+    <script src="customer.js" defer></script>
+  </body>
+</html>
