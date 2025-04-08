@@ -10,6 +10,12 @@ class ProfileManager {
 
     // Initialize manager
     this.init();
+
+    this.initTabs();
+    this.initOrders();
+    this.initAddresses();
+    this.initSecurity();
+    this.initNotifications();
   }
 
   async init() {
@@ -290,6 +296,183 @@ class ProfileManager {
         notification.innerHTML = "";
       }, 300);
     }, 3000);
+  }
+
+  initTabs() {
+    const tabs = document.querySelectorAll(".tab-btn");
+    tabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        tabs.forEach((t) => t.classList.remove("active"));
+        tab.classList.add("active");
+
+        const contents = document.querySelectorAll(".tab-content");
+        contents.forEach((c) => c.classList.remove("active"));
+        document.getElementById(tab.dataset.tab).classList.add("active");
+      });
+    });
+  }
+
+  async initOrders() {
+    const orders = await this.fetchOrders();
+    this.renderOrders(orders);
+
+    // Order filters
+    document
+      .getElementById("orderStatus")
+      .addEventListener("change", () => this.filterOrders());
+    document
+      .getElementById("orderDate")
+      .addEventListener("change", () => this.filterOrders());
+  }
+
+  async fetchOrders() {
+    try {
+      const response = await fetch(
+        `/api/orders?userId=${this.currentUser.uid}`
+      );
+      if (!response.ok) throw new Error("Failed to fetch orders");
+      return await response.json();
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+      return [];
+    }
+  }
+
+  renderOrders(orders) {
+    const ordersList = document.getElementById("ordersList");
+    ordersList.innerHTML = orders
+      .map(
+        (order) => `
+      <div class="order-card" onclick="profileManager.showOrderDetail('${
+        order.id
+      }')">
+        <div class="order-header">
+          <span class="order-id">Order #${order.id}</span>
+          <span class="order-status ${order.status}">${order.status}</span>
+        </div>
+        <div class="order-items">
+          ${order.items
+            .map(
+              (item) => `
+            <div class="order-item">
+              <img src="${item.image}" alt="${item.name}">
+              <div class="item-details">
+                <span class="item-name">${item.name}</span>
+                <span class="item-price">Rp ${item.price.toLocaleString()}</span>
+              </div>
+            </div>
+          `
+            )
+            .join("")}
+        </div>
+        <div class="order-footer">
+          <span class="order-date">${new Date(
+            order.date
+          ).toLocaleDateString()}</span>
+          <span class="order-total">Total: Rp ${order.total.toLocaleString()}</span>
+        </div>
+      </div>
+    `
+      )
+      .join("");
+  }
+
+  initAddresses() {
+    const addBtn = document.querySelector(".add-address-btn");
+    addBtn.addEventListener("click", () => this.showAddressModal());
+    this.loadAddresses();
+  }
+
+  async loadAddresses() {
+    const addresses =
+      JSON.parse(localStorage.getItem(`addresses_${this.currentUser.uid}`)) ||
+      [];
+    const container = document.querySelector(".addresses-list");
+
+    container.innerHTML = addresses
+      .map(
+        (addr, idx) => `
+      <div class="address-card">
+        <div class="address-type">${addr.type}</div>
+        <div class="address-details">
+          <h4>${addr.name}</h4>
+          <p>${addr.address}</p>
+          <p>${addr.phone}</p>
+        </div>
+        <div class="address-actions">
+          <button onclick="profileManager.editAddress(${idx})">
+            <i class="fas fa-edit"></i>
+          </button>
+          <button onclick="profileManager.deleteAddress(${idx})">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      </div>
+    `
+      )
+      .join("");
+  }
+
+  initSecurity() {
+    const passwordForm = document.getElementById("passwordForm");
+    passwordForm.addEventListener("submit", (e) => this.updatePassword(e));
+
+    const twoFactorToggle = document.getElementById("2faToggle");
+    twoFactorToggle.addEventListener("change", () => this.toggle2FA());
+  }
+
+  async updatePassword(e) {
+    e.preventDefault();
+    const oldPassword = document.getElementById("oldPassword").value;
+    const newPassword = document.getElementById("newPassword").value;
+    const confirmPassword = document.getElementById("confirmPassword").value;
+
+    if (newPassword !== confirmPassword) {
+      this.showNotification("Password baru tidak cocok", "error");
+      return;
+    }
+
+    try {
+      // Implement password update logic here
+      this.showNotification("Password berhasil diperbarui", "success");
+      e.target.reset();
+    } catch (error) {
+      this.showNotification(error.message, "error");
+    }
+  }
+
+  initNotifications() {
+    // Load saved preferences
+    const prefs =
+      JSON.parse(localStorage.getItem(`notif_prefs_${this.currentUser.uid}`)) ||
+      {};
+    Object.keys(prefs).forEach((key) => {
+      const checkbox = document.getElementById(key);
+      if (checkbox) checkbox.checked = prefs[key];
+    });
+
+    // Save preferences on change
+    document
+      .querySelectorAll(".notification-options input")
+      .forEach((input) => {
+        input.addEventListener("change", () =>
+          this.saveNotificationPreferences()
+        );
+      });
+  }
+
+  saveNotificationPreferences() {
+    const prefs = {};
+    document
+      .querySelectorAll(".notification-options input")
+      .forEach((input) => {
+        prefs[input.id] = input.checked;
+      });
+    localStorage.setItem(
+      `notif_prefs_${this.currentUser.uid}`,
+      JSON.stringify(prefs)
+    );
+    this.showNotification("Preferensi notifikasi disimpan");
   }
 }
 

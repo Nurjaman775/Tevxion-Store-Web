@@ -55,18 +55,18 @@ class AdminDashboard {
         if (sessionUser.photoURL) {
           avatarImg.src = sessionUser.photoURL;
         } else {
-          avatarImg.src = "../../img/default-avatar.png";
+          avatarImg.src = "/img/default-avatar.png";
         }
   
         // Add error handler for images
         avatarImg.onerror = () => {
-          avatarImg.src = "../../img/default-avatar.png";
+          avatarImg.src = "/img/default-avatar.png";
         };
   
         return true;
       } catch (error) {
         console.error("Auth check failed:", error);
-        window.location.href = "../../login/login.html";
+        window.location.href = "/login/login.html";
         return false;
       }
     }
@@ -483,18 +483,18 @@ class AdminDashboard {
           .signOut()
           .then(() => {
             sessionStorage.removeItem("currentUser");
-            window.location.href = "../../login/login.html";
+            window.location.href = "/login/login.html";
           })
           .catch((error) => {
             console.error("Logout error:", error);
             // Fallback logout
             sessionStorage.removeItem("currentUser");
-            window.location.href = "../../login/login.html";
+            window.location.href = "/login/login.html";
           });
       } catch (error) {
         // Fallback logout
         sessionStorage.removeItem("currentUser");
-        window.location.href = "../../login/login.html";
+        window.location.href = "/login/login.html";
       }
     }
   

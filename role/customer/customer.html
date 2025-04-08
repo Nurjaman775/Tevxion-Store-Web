@@ -3,23 +3,29 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>User Profile - Tevxion</title>
     <link rel="stylesheet" href="customer.css" />
     <link rel="icon" href="/img/favicon.ico" type="image/x-icon" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/fontawesome.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/brands.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/solid.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/svg-with-js.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/v4-shims.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/fontawesome.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet" />
-    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
-    <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin-allow-popups" />
+    <link
+      href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+    <meta
+      http-equiv="Cross-Origin-Opener-Policy"
+      content="same-origin-allow-popups"
+    />
     <meta http-equiv="Cross-Origin-Embedder-Policy" content="require-corp" />
-    <link rel="icon" href="/img/favicon.ico" type="image/x-icon" />
-    <title>User Profile - Tevxion</title>
+    <script src="/config/AuthManager.js" defer></script>
+    <script src="customer.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
   </head>
   <body>
     <div class="container">
@@ -61,70 +67,259 @@
           </div>
           <div class="profile-info">
             <h2 id="displayName">Loading...</h2>
-            <p id="userRole" class="user-role">Member</p>
+            <p id="userRole" class="user-role">
+              <i class="fas fa-shield-alt"></i>
+              <span>Member</span>
+            </p>
+            <div class="user-stats">
+              <div class="stat-item">
+                <i class="fas fa-shopping-bag"></i>
+                <span>12 Pesanan</span>
+              </div>
+              <div class="stat-item">
+                <i class="fas fa-map-marker-alt"></i>
+                <span>3 Alamat</span>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div class="profile-form">
-          <div class="form-group">
-            <label for="username">
-              <i class="fas fa-user"></i>
-              <span class="label-text">Username</span>
-            </label>
-            <input
-              type="text"
-              id="username"
-              placeholder="Masukkan username"
-              autocomplete="username"
-            />
+        <div class="profile-sections">
+          <div class="section-tabs">
+            <button
+              class="tab-btn active"
+              data-tab="profile"
+              title="Profile Tab"
+            >
+              Profile
+            </button>
+            <button class="tab-btn" data-tab="orders" title="Orders Tab">
+              Pesanan
+            </button>
+            <button class="tab-btn" data-tab="addresses" title="Addresses Tab">
+              Alamat
+            </button>
+            <button class="tab-btn" data-tab="security" title="Security Tab">
+              Keamanan
+            </button>
+            <button
+              class="tab-btn"
+              data-tab="notifications"
+              title="Notifications Tab"
+            >
+              Notifikasi
+            </button>
           </div>
 
-          <div class="form-group">
-            <label for="email">
-              <i class="fas fa-envelope"></i>
-              <span class="label-text">Email</span>
-            </label>
-            <input
-              type="email"
-              id="email"
-              placeholder="Masukkan email"
-              autocomplete="email"
-            />
+          <!-- Profile Section -->
+          <div class="tab-content active" id="profile">
+            <div class="profile-form">
+              <div class="form-group">
+                <label for="username">
+                  <i class="fas fa-user"></i>
+                  <span class="label-text">Username</span>
+                </label>
+                <input
+                  type="text"
+                  id="username"
+                  placeholder="Masukkan username"
+                  autocomplete="username"
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="email">
+                  <i class="fas fa-envelope"></i>
+                  <span class="label-text">Email</span>
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  placeholder="Masukkan email"
+                  autocomplete="email"
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="whatsapp">
+                  <i class="fab fa-whatsapp"></i>
+                  <span class="label-text">WhatsApp</span>
+                </label>
+                <input
+                  type="tel"
+                  id="whatsapp"
+                  placeholder="Contoh: 081234567890"
+                  autocomplete="tel"
+                  pattern="[0-9]*"
+                />
+              </div>
+
+              <button
+                id="saveProfile"
+                class="save-btn"
+                title="Save Profile Changes"
+              >
+                <i class="fas fa-save"></i>
+                <span class="btn-text">Simpan Perubahan</span>
+              </button>
+            </div>
           </div>
 
-          <div class="form-group">
-            <label for="whatsapp">
-              <i class="fab fa-whatsapp"></i>
-              <span class="label-text">WhatsApp</span>
-            </label>
-            <input
-              type="tel"
-              id="whatsapp"
-              placeholder="Contoh: 081234567890"
-              autocomplete="tel"
-              pattern="[0-9]*"
-            />
+          <!-- Orders Section -->
+          <div class="tab-content" id="orders">
+            <div class="orders-list">
+              <div class="order-filters">
+                <label for="orderStatus">Status Pesanan:</label>
+                <select id="orderStatus" title="Filter Status Pesanan">
+                  <option value="all">Semua Status</option>
+                  <option value="pending">Menunggu Pembayaran</option>
+                  <option value="processing">Diproses</option>
+                  <option value="shipped">Dikirim</option>
+                  <option value="completed">Selesai</option>
+                </select>
+
+                <label for="orderDate">Tanggal Pesanan:</label>
+                <input
+                  type="date"
+                  id="orderDate"
+                  title="Filter Tanggal Pesanan"
+                />
+              </div>
+              <div id="ordersList"></div>
+            </div>
           </div>
 
-          <button id="saveProfile" class="save-btn">
-            <i class="fas fa-save"></i>
-            <span class="btn-text">Simpan Perubahan</span>
-          </button>
+          <!-- Addresses Section -->
+          <div class="tab-content" id="addresses">
+            <button class="add-address-btn" title="Add New Address">
+              <i class="fas fa-plus"></i> Tambah Alamat Baru
+            </button>
+            <div class="addresses-list"></div>
+          </div>
+
+          <!-- Security Section -->
+          <div class="tab-content" id="security">
+            <div class="security-settings">
+              <div class="setting-card">
+                <h3>Ubah Password</h3>
+                <form id="passwordForm">
+                  <div class="form-group">
+                    <label for="oldPassword">Password Lama</label>
+                    <input
+                      type="password"
+                      placeholder="Masukkan password lama"
+                      id="oldPassword"
+                    />
+                  </div>
+                  <div class="form-group">
+                    <label for="newPassword">Password Baru</label>
+                    <input
+                      type="password"
+                      placeholder="Masukkan password baru"
+                      id="newPassword"
+                    />
+                  </div>
+                  <div class="form-group">
+                    <label for="confirmPassword">Konfirmasi Password</label>
+                    <input
+                      type="password"
+                      placeholder="Konfirmasi password baru"
+                      id="confirmPassword"
+                    />
+                  </div>
+                  <button type="submit" title="Update Password">
+                    Update Password
+                  </button>
+                </form>
+              </div>
+              <div class="setting-card">
+                <h3>Two-Factor Authentication</h3>
+                <div class="toggle-container">
+                  <label class="toggle" for="2faToggle">
+                    <input type="checkbox" id="2faToggle" title="Toggle 2FA" />
+                    <span class="slider"></span>
+                  </label>
+                  <span>Aktifkan 2FA</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Notifications Section -->
+          <div class="tab-content" id="notifications">
+            <div class="notification-settings">
+              <div class="setting-card">
+                <h3>Email Notifications</h3>
+                <div class="notification-options">
+                  <label for="emailOrders">
+                    <input
+                      type="checkbox"
+                      id="emailOrders"
+                      title="Email Order Updates"
+                    />
+                    Update Status Pesanan
+                  </label>
+                  <label for="emailPromos">
+                    <input
+                      type="checkbox"
+                      id="emailPromos"
+                      title="Email Promotions"
+                    />
+                    Promo & Diskon
+                  </label>
+                  <label for="emailNews">
+                    <input type="checkbox" id="emailNews" title="Email News" />
+                    Berita & Update
+                  </label>
+                </div>
+              </div>
+              <div class="setting-card">
+                <h3>WhatsApp Notifications</h3>
+                <div class="notification-options">
+                  <label for="waOrders">
+                    <input
+                      type="checkbox"
+                      id="waOrders"
+                      title="WhatsApp Order Updates"
+                    />
+                    Update Status Pesanan
+                  </label>
+                  <label for="waPromos">
+                    <input
+                      type="checkbox"
+                      id="waPromos"
+                      title="WhatsApp Promotions"
+                    />
+                    Promo & Diskon
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
+
+    <!-- Address Modal -->
+    <div class="modal" id="addressModal" title="Address Modal">
+      <!-- Modal content will be injected by JS -->
+    </div>
+
+    <!-- Order Detail Modal -->
+    <div class="modal" id="orderDetailModal" title="Order Detail Modal">
+      <!-- Modal content will be injected by JS -->
+    </div>
+
+    <!-- Floating Action Button for Mobile -->
+    <button class="fab-save" id="fabSave" title="Save Changes">
+      <i class="fas fa-save"></i>
+    </button>
 
     <!-- Notification -->
     <div id="notification" class="notification"></div>
 
     <!-- Firebase SDKs - Update this section -->
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+
     <script src="/config/firebase-config.js"></script>
-    <script src="/config/AuthManager.js" defer></script>
-    <script src="customer.js" defer></script>
   </body>
 </html>

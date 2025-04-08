@@ -3,5 +3,6 @@
 /rules/firestore.rules
 /rules/storage.rules
 /rules/database.rules.json
+/rules/realtime-stucture.json
 /login/login.html
 /login1/login1.html
