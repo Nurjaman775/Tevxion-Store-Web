@@ -80,7 +80,7 @@ function handleLoginRedirect(role) {
   } else if (role === "cashier") {
     window.location.href = "/role/kasir/kasir.html";
   } else if (role === "customer") {
-    window.location.href = "/halaman.html";
+    window.location.href = "/index.html";
   }
 }
 
