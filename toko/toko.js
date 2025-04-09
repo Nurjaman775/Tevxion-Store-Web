@@ -76,7 +76,7 @@ class ShopManager {
     this.setupStockUpdateListeners();
 
     // Tambahkan real-time stock reference
-    this.realTimeStockRef = firebase.database().ref('real_time_stock');
+    this.realTimeStockRef = firebase.database().ref("real_time_stock");
     this.setupRealtimeStockListener();
   }
 
@@ -100,18 +100,18 @@ class ShopManager {
 
   setupRealtimeStockListener() {
     // Listen untuk perubahan stok secara real-time
-    this.realTimeStockRef.on('value', (snapshot) => {
+    this.realTimeStockRef.on("value", (snapshot) => {
       const stockData = snapshot.val() || {};
-      
+
       // Update stok untuk produk yang ada
-      this.products = this.products.map(product => ({
+      this.products = this.products.map((product) => ({
         ...product,
-        stock: stockData[product.id]?.stock ?? product.stock
+        stock: stockData[product.id]?.stock ?? product.stock,
       }));
 
-      this.apiProducts = this.apiProducts.map(product => ({
+      this.apiProducts = this.apiProducts.map((product) => ({
         ...product,
-        stock: stockData[product.id]?.stock ?? product.stock
+        stock: stockData[product.id]?.stock ?? product.stock,
       }));
 
       // Update tampilan
@@ -353,9 +353,9 @@ class ShopManager {
     );
 
     this.productsContainer.innerHTML = `
-      ${this.renderProducts(paginatedProducts)}
-      ${this.renderPagination()}
-    `;
+        ${this.renderProducts(paginatedProducts)}
+        ${this.renderPagination()}
+      `;
 
     this.attachProductListeners();
   }
@@ -380,61 +380,59 @@ class ShopManager {
     try {
       const currentUser = JSON.parse(sessionStorage.getItem("currentUser"));
 
-      // Persiapkan data transaksi
-      const transactionData = {
-        items: this.cart.map((item) => ({
-          id: String(item.id),
-          name: item.name,
-          price: item.price,
-          quantity: item.quantity,
-          isApiProduct: item.id.startsWith("api_"),
-        })),
-        total: this.calculateTotal(),
-        customerInfo: {
-          userId: currentUser.username,
-          timestamp: new Date().toISOString(),
-        },
-        status: "completed",
-      };
+      // Cek stok real-time sebelum checkout
+      const stockSnapshot = await firebase
+        .database()
+        .ref("real_time_stock")
+        .once("value");
+      const currentStocks = stockSnapshot.val() || {};
 
-      // Update stock di Firestore dan API
-      const stockUpdatePromises = this.cart.map(async (item) => {
-        if (item.id.startsWith("api_")) {
-          // Update stock untuk produk API
-          await this.updateApiProductStock(item);
-        } else {
-          // Update stock untuk produk lokal
-          await this.updateLocalProductStock(item);
+      // Validasi stok
+      for (const item of this.cart) {
+        const realTimeStock = currentStocks[item.id]?.stock ?? 0;
+        if (realTimeStock < item.quantity) {
+          throw new Error(`Stok tidak cukup untuk ${item.name}`);
         }
+      }
+
+      // Update stok di Firebase
+      const updates = {};
+      this.cart.forEach((item) => {
+        const currentStock = currentStocks[item.id]?.stock ?? 0;
+        updates[`real_time_stock/${item.id}`] = {
+          stock: currentStock - item.quantity,
+          lastUpdate: Date.now(),
+          name: item.name,
+          type: item.id.startsWith("api_") ? "api" : "local",
+        };
       });
 
-      // Tunggu semua update stock selesai
-      await Promise.all(stockUpdatePromises);
+      // Simpan transaksi dan update stok
+      await Promise.all([
+        // Update stok
+        firebase.database().ref().update(updates),
 
-      // Simpan transaksi ke Firestore
-      const db = firebase.firestore();
-      const transactionRef = await db
-        .collection("transactions")
-        .add(transactionData);
+        // Simpan transaksi
+        firebase.firestore().collection("transactions").add({
+          items: this.cart,
+          total: this.calculateTotal(),
+          userId: currentUser.username,
+          timestamp: Date.now(),
+          status: "completed",
+        }),
+      ]);
 
-      // Update tampilan
-      this.showReceipt({
-        ...transactionData,
-        transactionId: transactionRef.id,
-      });
+      // Tampilkan struk
+      this.showReceipt();
 
       // Bersihkan keranjang
       this.cart = [];
       this.saveCartToSession();
       this.updateCartDisplay();
-      this.closeCart();
 
-      // Refresh products display
-      await this.fetchProducts();
-
-      alert("Transaksi berhasil!");
+      alert("Checkout berhasil!");
     } catch (error) {
-      console.error("Error checkout:", error);
+      console.error("Error during checkout:", error);
       alert("Gagal melakukan checkout: " + error.message);
     }
   }
@@ -656,63 +654,63 @@ class ShopManager {
           : "";
 
         return `
-        <div class="product-card ${
-          isApiProduct ? "api-product" : ""
-        }" data-id="${product.id}">
-          ${apiProductBadge}
-          <div class="product-image">
-            <img src="${product.image}" alt="${product.name}" loading="lazy">
-          </div>
-          <h3>${product.name}</h3>
-          <p class="price">Rp ${product.price.toLocaleString()}</p>
-          <div class="product-details">
-            <p class="material">Material: ${product.material}</p>
-            <p class="date">Added: ${new Date(product.date).toLocaleDateString(
-              "id-ID"
-            )}</p>
-          </div>
-          <p class="stock ${isOutOfStock ? "out-of-stock" : ""}">
-            Stok: ${product.stock}
-          </p>
-          <div class="button-group">
-            ${
-              isOutOfStock
-                ? `
-              <button class="cart-btn disabled" disabled>
-                <i class="fas fa-cart-plus"></i> Stok Habis
-              </button>
-            `
-                : isInCart
-                ? `
-              <div class="cart-controls" data-id="${product.id}">
-                <button class="cart-btn quantity-btn minus-btn" data-id="${
-                  product.id
-                }">
-                  <i class="fas fa-minus"></i>
+          <div class="product-card ${
+            isApiProduct ? "api-product" : ""
+          }" data-id="${product.id}">
+            ${apiProductBadge}
+            <div class="product-image">
+              <img src="${product.image}" alt="${product.name}" loading="lazy">
+            </div>
+            <h3>${product.name}</h3>
+            <p class="price">Rp ${product.price.toLocaleString()}</p>
+            <div class="product-details">
+              <p class="material">Material: ${product.material}</p>
+              <p class="date">Added: ${new Date(
+                product.date
+              ).toLocaleDateString("id-ID")}</p>
+            </div>
+            <p class="stock ${isOutOfStock ? "out-of-stock" : ""}">
+              Stok: ${product.stock}
+            </p>
+            <div class="button-group">
+              ${
+                isOutOfStock
+                  ? `
+                <button class="cart-btn disabled" disabled>
+                  <i class="fas fa-cart-plus"></i> Stok Habis
                 </button>
-                <span class="quantity-display">${cartItem.quantity}</span>
-                <button class="cart-btn quantity-btn plus-btn" data-id="${
-                  product.id
-                }" 
-                  ${cartItem.quantity >= product.stock ? "disabled" : ""}>
-                  <i class="fas fa-plus"></i>
+              `
+                  : isInCart
+                  ? `
+                <div class="cart-controls" data-id="${product.id}">
+                  <button class="cart-btn quantity-btn minus-btn" data-id="${
+                    product.id
+                  }">
+                    <i class="fas fa-minus"></i>
+                  </button>
+                  <span class="quantity-display">${cartItem.quantity}</span>
+                  <button class="cart-btn quantity-btn plus-btn" data-id="${
+                    product.id
+                  }" 
+                    ${cartItem.quantity >= product.stock ? "disabled" : ""}>
+                    <i class="fas fa-plus"></i>
+                  </button>
+                </div>
+              `
+                  : `
+                <button class="cart-btn add-to-cart" data-id="${product.id}" 
+                  title="Tambah ke Keranjang">
+                  <i class="fas fa-cart-plus"></i>
                 </button>
-              </div>
-            `
-                : `
-              <button class="cart-btn add-to-cart" data-id="${product.id}" 
-                title="Tambah ke Keranjang">
-                <i class="fas fa-cart-plus"></i>
+              `
+              }
+              <button class="buy-btn" data-id="${product.id}"
+                ${isOutOfStock ? "disabled" : ""}>
+                <i class="fas fa-shopping-bag"></i> Beli
               </button>
-            `
-            }
-            <button class="buy-btn" data-id="${product.id}"
-              ${isOutOfStock ? "disabled" : ""}>
-              <i class="fas fa-shopping-bag"></i> Beli
-            </button>
+            </div>
           </div>
-        </div>
-      `;
+        `;
       })
       .join("");
   }
@@ -725,27 +723,27 @@ class ShopManager {
     let buttons = "";
     if (totalPages > 1) {
       buttons += `
-        <button class="page-btn" ${this.currentPage === 1 ? "disabled" : ""} 
-          onclick="shop.changePage(${this.currentPage - 1})">
-          <i class="fas fa-chevron-left"></i>
-        </button>
-      `;
+          <button class="page-btn" ${this.currentPage === 1 ? "disabled" : ""} 
+            onclick="shop.changePage(${this.currentPage - 1})">
+            <i class="fas fa-chevron-left"></i>
+          </button>
+        `;
 
       for (let i = 1; i <= totalPages; i++) {
         buttons += `
-          <button class="page-btn ${this.currentPage === i ? "active" : ""}" 
-            onclick="shop.changePage(${i})">${i}</button>
-        `;
+            <button class="page-btn ${this.currentPage === i ? "active" : ""}" 
+              onclick="shop.changePage(${i})">${i}</button>
+          `;
       }
 
       buttons += `
-        <button class="page-btn" ${
-          this.currentPage === totalPages ? "disabled" : ""
-        } 
-          onclick="shop.changePage(${this.currentPage + 1})">
-          <i class="fas fa-chevron-right"></i>
-        </button>
-      `;
+          <button class="page-btn" ${
+            this.currentPage === totalPages ? "disabled" : ""
+          } 
+            onclick="shop.changePage(${this.currentPage + 1})">
+            <i class="fas fa-chevron-right"></i>
+          </button>
+        `;
     }
 
     return `<div class="pagination">${buttons}</div>`;
@@ -811,47 +809,47 @@ class ShopManager {
     const itemsHtml = this.cart
       .map(
         (item) => `
-      <div class="receipt-item">
-        <div class="receipt-item-header">${item.name}</div>
-        <div class="receipt-item-details">
-          <span>${item.quantity} x Rp ${item.price.toLocaleString(
+        <div class="receipt-item">
+          <div class="receipt-item-header">${item.name}</div>
+          <div class="receipt-item-details">
+            <span>${item.quantity} x Rp ${item.price.toLocaleString(
           "id-ID"
         )}</span>
-          <span>Rp ${(item.price * item.quantity).toLocaleString(
-            "id-ID"
-          )}</span>
+            <span>Rp ${(item.price * item.quantity).toLocaleString(
+              "id-ID"
+            )}</span>
+          </div>
         </div>
-      </div>
-    `
+      `
       )
       .join("");
 
     // Update receipt content with detailed calculations
     modal.querySelector(".receipt-items").innerHTML = `
-      <div style="margin-bottom: 3mm">
-        <div>No. Invoice: ${invoiceNumber}</div>
-        <div>Kasir: ${currentUser.username}</div>
-        <div>Tanggal: ${now.toLocaleString("id-ID")}</div>
-      </div>
-      <div class="receipt-divider"></div>
-      ${itemsHtml}
-      <div class="receipt-divider"></div>
-    `;
+        <div style="margin-bottom: 3mm">
+          <div>No. Invoice: ${invoiceNumber}</div>
+          <div>Kasir: ${currentUser.username}</div>
+          <div>Tanggal: ${now.toLocaleString("id-ID")}</div>
+        </div>
+        <div class="receipt-divider"></div>
+        ${itemsHtml}
+        <div class="receipt-divider"></div>
+      `;
 
     modal.querySelector(".receipt-summary").innerHTML = `
-      <div class="receipt-item-details">
-        <span>Subtotal:</span>
-        <span>Rp ${subtotal.toLocaleString("id-ID")}</span>
-      </div>
-      <div class="receipt-item-details">
-        <span>PPN (11%):</span>
-        <span>Rp ${tax.toLocaleString("id-ID")}</span>
-      </div>
-      <div class="receipt-total">
-        <span>TOTAL:</span>
-        <span>Rp ${total.toLocaleString("id-ID")}</span>
-      </div>
-    `;
+        <div class="receipt-item-details">
+          <span>Subtotal:</span>
+          <span>Rp ${subtotal.toLocaleString("id-ID")}</span>
+        </div>
+        <div class="receipt-item-details">
+          <span>PPN (11%):</span>
+          <span>Rp ${tax.toLocaleString("id-ID")}</span>
+        </div>
+        <div class="receipt-total">
+          <span>TOTAL:</span>
+          <span>Rp ${total.toLocaleString("id-ID")}</span>
+        </div>
+      `;
 
     modal.style.display = "flex";
   }
@@ -936,16 +934,16 @@ class ShopManager {
     const modal = document.createElement("div");
     modal.className = "buy-options-modal";
     modal.innerHTML = `
-      <div class="title">Konfirmasi Pembelian "${product.name}"</div>
-      <div class="button-group">
-      <button class="btn-cancel">
-      <i class="fas fa-times"></i> Batal
-      </button>
-      <button class="btn-checkout">
-        <i class="fas fa-check"></i> Checkout
-      </button>
-      </div>
-    `;
+        <div class="title">Konfirmasi Pembelian "${product.name}"</div>
+        <div class="button-group">
+        <button class="btn-cancel">
+        <i class="fas fa-times"></i> Batal
+        </button>
+        <button class="btn-checkout">
+          <i class="fas fa-check"></i> Checkout
+        </button>
+        </div>
+      `;
 
     // Handle button clicks
     modal.querySelector(".btn-checkout").onclick = (e) => {
@@ -1037,54 +1035,54 @@ class ShopManager {
 
     const totalPrice = this.calculateTotal();
     cartDropdown.innerHTML = `
-      <div class="cart-header">
-        <h3>Keranjang Belanja</h3>
-        <span>${this.cart.length} item</span>
-      </div>
-      <div class="cart-items">
-        ${this.cart
-          .map(
-            (item) => `
-          <div class="cart-item">
-            <img src="${item.image}" alt="${item.name}">
-            <div class="cart-item-details">
-              <div class="cart-item-name">${item.name}</div>
-              <div class="cart-item-price">
-                Rp ${(item.price * item.quantity).toLocaleString("id-ID")}
-              </div>
-              <div class="cart-item-controls">
-                <div class="cart-item-quantity">
-                  <button class="cart-quantity-btn minus-btn" data-id="${
-                    item.id
-                  }" 
-                    ${item.quantity <= 1 ? "disabled" : ""}>
-                    <i class="fas fa-minus"></i>
-                  </button>
-                  <span class="cart-quantity-display">${item.quantity}</span>
-                  <button class="cart-quantity-btn plus-btn" data-id="${
-                    item.id
-                  }"
-                    ${item.quantity >= item.maxStock ? "disabled" : ""}>
-                    <i class="fas fa-plus"></i>
+        <div class="cart-header">
+          <h3>Keranjang Belanja</h3>
+          <span>${this.cart.length} item</span>
+        </div>
+        <div class="cart-items">
+          ${this.cart
+            .map(
+              (item) => `
+            <div class="cart-item">
+              <img src="${item.image}" alt="${item.name}">
+              <div class="cart-item-details">
+                <div class="cart-item-name">${item.name}</div>
+                <div class="cart-item-price">
+                  Rp ${(item.price * item.quantity).toLocaleString("id-ID")}
+                </div>
+                <div class="cart-item-controls">
+                  <div class="cart-item-quantity">
+                    <button class="cart-quantity-btn minus-btn" data-id="${
+                      item.id
+                    }" 
+                      ${item.quantity <= 1 ? "disabled" : ""}>
+                      <i class="fas fa-minus"></i>
+                    </button>
+                    <span class="cart-quantity-display">${item.quantity}</span>
+                    <button class="cart-quantity-btn plus-btn" data-id="${
+                      item.id
+                    }"
+                      ${item.quantity >= item.maxStock ? "disabled" : ""}>
+                      <i class="fas fa-plus"></i>
+                    </button>
+                  </div>
+                  <button class="cart-remove-btn" data-id="${item.id}">
+                    <i class="fas fa-trash"></i>
                   </button>
                 </div>
-                <button class="cart-remove-btn" data-id="${item.id}">
-                  <i class="fas fa-trash"></i>
-                </button>
               </div>
             </div>
-          </div>
-        `
-          )
-          .join("")}
-      </div>
-      <div class="cart-actions">
-        <button class="btn-cancel" onclick="shop.closeCart()">Batal</button>
-        <button class="btn-checkout" onclick="shop.handleCheckout()">
-          Checkout (Rp ${totalPrice.toLocaleString("id-ID")})
-        </button>
-      </div>
-    `;
+          `
+            )
+            .join("")}
+        </div>
+        <div class="cart-actions">
+          <button class="btn-cancel" onclick="shop.closeCart()">Batal</button>
+          <button class="btn-checkout" onclick="shop.handleCheckout()">
+            Checkout (Rp ${totalPrice.toLocaleString("id-ID")})
+          </button>
+        </div>
+      `;
 
     // Attach event listeners
     cartDropdown.querySelectorAll(".minus-btn").forEach((btn) => {
