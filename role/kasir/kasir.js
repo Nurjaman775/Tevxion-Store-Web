@@ -1,96 +1,247 @@
 class StockManager {
   constructor() {
     this.products = [];
+    this.db = null;
+    this.realTimeStockRef = null;
+    this.productsRef = null;
+
+    // Initialize UI first
     this.initializeUI();
-    this.loadProducts();
+    this.setupEventListeners();
+
+    // Then initialize Firebase and load data
+    this.init();
+  }
+
+  async init() {
+    try {
+      // Check auth first
+      if (!this.checkAuth()) {
+        return;
+      }
+
+      // Initialize Firebase
+      await this.initializeFirebase();
+
+      // Setup real-time sync and load products only after Firebase is initialized
+      this.setupRealtimeSync();
+      await this.loadProducts();
+    } catch (error) {
+      console.error("Initialization error:", error);
+      this.showNotification("Error initializing application", "error");
+    }
+  }
+
+  async initializeFirebase() {
+    try {
+      const currentUser = JSON.parse(sessionStorage.getItem("currentUser"));
+      if (!currentUser) throw new Error("User not found");
+
+      // Initialize Firebase references
+      this.db = firebase.database();
+      this.realTimeStockRef = this.db.ref("real_time_stock");
+      this.productsRef = this.db.ref("products");
+
+      // Tambahkan anonymous auth untuk read access
+      if (!firebase.auth().currentUser) {
+        await firebase.auth().signInAnonymously();
+      }
+
+      console.log("Firebase initialized successfully");
+      return true;
+    } catch (error) {
+      console.error("Firebase initialization error:", error);
+      this.showNotification(
+        "Error initializing Firebase: " + error.message,
+        "error"
+      );
+      return false;
+    }
+  }
+
+  checkAuth() {
+    const user = JSON.parse(sessionStorage.getItem("currentUser"));
+    if (!user || user.role !== "cashier") {
+      alert("Anda harus login sebagai kasir");
+      window.location.href = "/login/login.html";
+      return false;
+    }
+    return true;
   }
 
   initializeUI() {
-    // Initialize search and filters
-    document
-      .getElementById("searchInput")
-      .addEventListener("input", () => this.filterProducts());
-    document
-      .getElementById("categoryFilter")
-      .addEventListener("change", () => this.filterProducts());
-    document
-      .getElementById("stockFilter")
-      .addEventListener("change", () => this.filterProducts());
-
-    // Refresh button
-    document
-      .getElementById("refreshBtn")
-      .addEventListener("click", () => this.loadProducts());
-
-    // Modal elements
+    // Initialize UI elements
+    this.searchInput = document.getElementById("searchInput");
+    this.categoryFilter = document.getElementById("categoryFilter");
+    this.stockFilter = document.getElementById("stockFilter");
+    this.productsGrid = document.getElementById("productsGrid");
     this.modal = document.getElementById("stockModal");
-    this.modal
-      .querySelector(".close-btn")
-      .addEventListener("click", () => this.closeModal());
-    this.modal
-      .querySelector(".cancel-btn")
-      .addEventListener("click", () => this.closeModal());
-    this.modal
-      .querySelector(".save-btn")
-      .addEventListener("click", () => this.updateStock());
 
-    // Stock controls
-    const stockInput = this.modal.querySelector("#stockChange");
-    this.modal.querySelector(".minus-btn").addEventListener("click", () => {
-      stockInput.value = Math.max(0, parseInt(stockInput.value) - 1);
+    // Initialize modal elements
+    if (this.modal) {
+      // Setup modal close button
+      this.modal
+        .querySelector(".close-btn")
+        .addEventListener("click", () => this.closeModal());
+      this.modal
+        .querySelector(".cancel-btn")
+        .addEventListener("click", () => this.closeModal());
+      this.modal
+        .querySelector(".save-btn")
+        .addEventListener("click", () => this.updateStock());
+
+      // Setup stock control buttons
+      const minusBtn = this.modal.querySelector(".minus-btn");
+      const plusBtn = this.modal.querySelector(".plus-btn");
+      const stockInput = this.modal.querySelector("#stockChange");
+
+      minusBtn.addEventListener("click", () => {
+        const currentValue = parseInt(stockInput.value) || 0;
+        stockInput.value = Math.max(0, currentValue - 1);
+      });
+
+      plusBtn.addEventListener("click", () => {
+        const currentValue = parseInt(stockInput.value) || 0;
+        stockInput.value = currentValue + 1;
+      });
+    }
+
+    // Initialize refresh button
+    const refreshBtn = document.getElementById("refreshBtn");
+    if (refreshBtn) {
+      refreshBtn.addEventListener("click", () => this.loadProducts());
+    }
+  }
+
+  setupEventListeners() {
+    // Add event listeners for filters
+    if (this.searchInput) {
+      this.searchInput.addEventListener("input", () => this.filterProducts());
+    }
+
+    if (this.categoryFilter) {
+      this.categoryFilter.addEventListener("change", () =>
+        this.filterProducts()
+      );
+    }
+
+    if (this.stockFilter) {
+      this.stockFilter.addEventListener("change", () => this.filterProducts());
+    }
+  }
+
+  setupRealtimeSync() {
+    if (!this.realTimeStockRef) return;
+
+    this.realTimeStockRef.on("value", (snapshot) => {
+      const realtimeStocks = snapshot.val() || {};
+      this.updateProductStocks(realtimeStocks);
     });
-    this.modal.querySelector(".plus-btn").addEventListener("click", () => {
-      stockInput.value = parseInt(stockInput.value) + 1;
-    });
+  }
+
+  updateProductStocks(realtimeStocks) {
+    if (!this.products) return;
+
+    this.products = this.products.map((product) => ({
+      ...product,
+      stock: realtimeStocks[product.id]?.stock ?? product.stock,
+    }));
+
+    this.renderProducts();
   }
 
   async loadProducts() {
     try {
-      // Load local stocks
-      const localStocks =
-        JSON.parse(localStorage.getItem("local_product_stocks")) || {};
-      const apiStocks =
-        JSON.parse(localStorage.getItem("api_product_stocks")) || {};
+      if (!this.realTimeStockRef) {
+        throw new Error("Firebase not initialized");
+      }
 
-      // Load local products
-      const localProducts =
-        JSON.parse(localStorage.getItem("store_products")) || [];
-      const staticProducts = [...this.getDefaultProducts()];
+      const realtimeSnapshot = await this.realTimeStockRef.once("value");
+      const realtimeStocks = realtimeSnapshot.val() || {};
 
-      // Combine and format products
+      // Load local products first
+      const localProducts = this.getDefaultProducts();
+      const apiProducts = await this.fetchApiProducts();
+
       this.products = [
-        ...staticProducts.map((p) => ({
-          ...p,
-          type: "local",
-          stock: localStocks[p.id] ?? p.stock,
-        })),
         ...localProducts.map((p) => ({
           ...p,
           type: "local",
-          stock: localStocks[p.id] ?? p.stock,
+          stock: realtimeStocks[p.id]?.stock ?? p.stock,
+        })),
+        ...apiProducts.map((p) => ({
+          ...p,
+          type: "api",
+          stock: realtimeStocks[p.id]?.stock ?? p.stock,
         })),
       ];
 
-      // Load API products
-      const response = await fetch("https://fakestoreapi.com/products");
-      if (response.ok) {
-        const apiData = await response.json();
-        const apiProducts = apiData.map((item) => ({
-          id: `api_${item.id}`,
-          name: item.title,
-          price: Math.round(item.price * 15000),
-          image: item.image,
-          type: "api",
-          stock: apiStocks[`api_${item.id}`] ?? 10,
-        }));
-        this.products = [...this.products, ...apiProducts];
-      }
-
       this.renderProducts();
+      await this.syncProductsToFirebase(this.products);
     } catch (error) {
       console.error("Error loading products:", error);
-      this.showNotification("Error loading products", "error");
+      this.showNotification("Gagal memuat produk: " + error.message, "error");
     }
+  }
+
+  async fetchApiProducts() {
+    try {
+      const response = await fetch("https://fakestoreapi.com/products");
+      if (!response.ok) throw new Error("Network response was not ok");
+
+      const data = await response.json();
+      return data.map((item) => ({
+        id: `api_${item.id}`,
+        name: item.title,
+        price: Math.round(item.price * 15000),
+        image: item.image,
+        category: item.category,
+        description: item.description,
+        stock: 10,
+      }));
+    } catch (error) {
+      console.error("Error fetching API products:", error);
+      return [];
+    }
+  }
+
+  async syncProductsToFirebase(products) {
+    try {
+      const currentUser = JSON.parse(sessionStorage.getItem("currentUser"));
+      if (!currentUser || currentUser.role !== "cashier") {
+        throw new Error("Unauthorized access");
+      }
+
+      // Sederhanakan struktur data
+      const updates = {};
+      products.forEach((product) => {
+        updates[product.id] = {
+          stock: product.stock || 0,
+          lastUpdate: Date.now(),
+          name: product.name,
+          type: product.type || "local",
+        };
+      });
+
+      // Update langsung ke real_time_stock
+      await this.realTimeStockRef.update(updates);
+      console.log("Products synced successfully");
+    } catch (error) {
+      console.error("Sync error:", error);
+      this.showNotification("Failed to sync: " + error.message, "error");
+    }
+  }
+
+  getRandomMaterial() {
+    const materials = [
+      "Plastic",
+      "Metal",
+      "Glass",
+      "Carbon Fiber",
+      "Aluminum",
+      "Stainless Steel",
+    ];
+    return materials[Math.floor(Math.random() * materials.length)];
   }
 
   getDefaultProducts() {
@@ -217,84 +368,69 @@ class StockManager {
   }
 
   async updateStock() {
-    const productId = this.modal.dataset.productId;
-    const product = this.products.find((p) => p.id === productId);
-    const changeAmount = parseInt(
-      this.modal.querySelector("#stockChange").value
-    );
-    const note = this.modal.querySelector("#updateNote").value;
-
-    if (!product || isNaN(changeAmount) || changeAmount < 0) {
-      this.showNotification("Invalid input", "error");
-      return;
-    }
-
     try {
-      const newStock = product.stock + changeAmount;
+      const productId = this.modal.dataset.productId;
+      const product = this.products.find((p) => p.id === productId);
+      const changeAmount = parseInt(this.modal.querySelector("#stockChange").value);
+      const note = this.modal.querySelector("#updateNote").value;
 
-      // Update local storage based on product type
-      if (product.id.startsWith("api_")) {
-        const apiStocks =
-          JSON.parse(localStorage.getItem("api_product_stocks")) || {};
-        apiStocks[product.id] = newStock;
-        localStorage.setItem("api_product_stocks", JSON.stringify(apiStocks));
-      } else {
-        const localStocks =
-          JSON.parse(localStorage.getItem("local_product_stocks")) || {};
-        localStocks[product.id] = newStock;
-        localStorage.setItem(
-          "local_product_stocks",
-          JSON.stringify(localStocks)
-        );
+      if (!product || isNaN(changeAmount) || changeAmount < 0) {
+        this.showNotification("Input tidak valid", "error");
+        return;
       }
 
-      // Log the stock update
+      const newStock = product.stock + changeAmount;
+
+      // Simplify update data structure
+      const updateData = {
+        stock: newStock,
+        lastUpdate: Date.now(),
+        name: product.name,
+        type: product.type || 'local'
+      };
+
+      // Update stock
+      await this.realTimeStockRef.child(productId).update(updateData);
+
+      // Log update separately
       await this.logStockUpdate(product, changeAmount, newStock, note);
 
       // Update local data
       product.stock = newStock;
       this.renderProducts();
       this.closeModal();
-      this.showNotification("Stock updated successfully", "success");
+      this.showNotification("Stok berhasil diperbarui", "success");
+
     } catch (error) {
       console.error("Error updating stock:", error);
-      this.showNotification("Error updating stock", "error");
+      this.showNotification("Gagal memperbarui stok: " + error.message, "error"); 
     }
   }
 
   async logStockUpdate(product, change, newStock, note) {
     try {
       const currentUser = JSON.parse(sessionStorage.getItem("currentUser"));
-
-      // Initialize database reference directly
-      const db = firebase.database();
-      const stockUpdateRef = db.ref("stock_updates").push();
-
+      
       const updateData = {
         productId: product.id,
         productName: product.name,
         previousStock: product.stock,
-        change: change,
         newStock: newStock,
+        change: change,
         note: note || "Stock update",
-        timestamp: firebase.database.ServerValue.TIMESTAMP,
-        userId: currentUser?.username || "anonymous",
-        userRole: currentUser?.role || "unknown",
+        timestamp: Date.now(),
+        userId: currentUser?.username || "anonymous"
       };
 
+      // Use stockUpdatesRef directly from db
+      const stockUpdateRef = this.db.ref("stock_updates").push();
       await stockUpdateRef.set(updateData);
+      
       console.log("Stock update logged successfully");
 
-      // Update real-time stock
-      const realTimeStockRef = db.ref(`real_time_stock/${product.id}`);
-      await realTimeStockRef.update({
-        stock: newStock,
-        lastUpdate: firebase.database.ServerValue.TIMESTAMP,
-      });
     } catch (error) {
-      console.error("Error logging stock update:", error);
-      this.showNotification(`Error updating stock: ${error.message}`, "error");
-      throw error;
+      console.error("Error logging update:", error);
+      // Don't throw error to prevent blocking stock update
     }
   }
 
@@ -314,4 +450,12 @@ class StockManager {
   }
 }
 
-const stockManager = new StockManager();
+// Initialize after DOM is ready and Firebase is loaded
+window.addEventListener("load", () => {
+  if (typeof firebase !== "undefined") {
+    window.stockManager = new StockManager();
+  } else {
+    console.error("Firebase not loaded");
+    alert("Error: Firebase not loaded. Please check your internet connection.");
+  }
+});

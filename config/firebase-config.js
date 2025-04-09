@@ -78,6 +78,24 @@ try {
   if (typeof firebase.auth === "function") {
     authInstance = firebase.auth();
     window.auth = authInstance;
+
+    // Modifikasi auth state observer
+    firebase.auth().onAuthStateChanged((user) => {
+      if (user) {
+        const currentUser = JSON.parse(sessionStorage.getItem("currentUser"));
+        // Set role tanpa menggunakan custom claims
+        if (currentUser && currentUser.role) {
+          user.getIdTokenResult(true).then((idTokenResult) => {
+            // Simpan role di session storage
+            const userData = {
+              ...currentUser,
+              role: currentUser.role,
+            };
+            sessionStorage.setItem("currentUser", JSON.stringify(userData));
+          });
+        }
+      }
+    });
   }
 
   if (typeof firebase.firestore === "function") {
@@ -88,10 +106,10 @@ try {
       merge: true,
       cache: {
         tabManager: {
-          forceOwnership: true // Enable offline persistence with single tab mode
+          forceOwnership: true, // Enable offline persistence with single tab mode
         },
-        lruGarbageCollection: true // Enable LRU garbage collection
-      }
+        lruGarbageCollection: true, // Enable LRU garbage collection
+      },
     });
     window.db = firestoreInstance;
   }
