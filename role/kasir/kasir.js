@@ -371,7 +371,9 @@ class StockManager {
     try {
       const productId = this.modal.dataset.productId;
       const product = this.products.find((p) => p.id === productId);
-      const changeAmount = parseInt(this.modal.querySelector("#stockChange").value);
+      const changeAmount = parseInt(
+        this.modal.querySelector("#stockChange").value
+      );
       const note = this.modal.querySelector("#updateNote").value;
 
       if (!product || isNaN(changeAmount) || changeAmount < 0) {
@@ -386,7 +388,7 @@ class StockManager {
         stock: newStock,
         lastUpdate: Date.now(),
         name: product.name,
-        type: product.type || 'local'
+        type: product.type || "local",
       };
 
       // Update stock
@@ -400,17 +402,19 @@ class StockManager {
       this.renderProducts();
       this.closeModal();
       this.showNotification("Stok berhasil diperbarui", "success");
-
     } catch (error) {
       console.error("Error updating stock:", error);
-      this.showNotification("Gagal memperbarui stok: " + error.message, "error"); 
+      this.showNotification(
+        "Gagal memperbarui stok: " + error.message,
+        "error"
+      );
     }
   }
 
   async logStockUpdate(product, change, newStock, note) {
     try {
       const currentUser = JSON.parse(sessionStorage.getItem("currentUser"));
-      
+
       const updateData = {
         productId: product.id,
         productName: product.name,
@@ -419,15 +423,14 @@ class StockManager {
         change: change,
         note: note || "Stock update",
         timestamp: Date.now(),
-        userId: currentUser?.username || "anonymous"
+        userId: currentUser?.username || "anonymous",
       };
 
       // Use stockUpdatesRef directly from db
       const stockUpdateRef = this.db.ref("stock_updates").push();
       await stockUpdateRef.set(updateData);
-      
-      console.log("Stock update logged successfully");
 
+      console.log("Stock update logged successfully");
     } catch (error) {
       console.error("Error logging update:", error);
       // Don't throw error to prevent blocking stock update

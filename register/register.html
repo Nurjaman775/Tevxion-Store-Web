@@ -47,16 +47,23 @@
     />
     <title>Tevxion-Web-Register</title>
 
-    <!-- Pemanggilan Firebase -->
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    <!-- Add this in your HTML files where you need Firestore -->
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <!-- Initialize Firebase -->
+    <script src="/config/firebase-config.js"></script>
+    
+    <!-- Application Code -->
     <script src="register.js"></script>
   </head>
 
   <body>
     <div class="box">
       <div class="out">
-        <a href="/index.html" title="Kembali Ke Halaman Utama"><i class="bx bx-undo"></i></a>
+        <a href="../index.html" title="Kembali Ke Halaman Utama"><i class="bx bx-undo"></i></a>
       </div>
       <span class="borderLine"></span>
       <form id="registerForm" onsubmit="return handleRegister(event)">
@@ -140,7 +147,7 @@
           >
           <a href="/login1/login1.html" title="Go to login">Login</a>
         </div>
-        <input type="submit" value="Register" title="Klik untuk mendaftar" />
+        <input type="submit" value="Register" title="Klik Untuk Mendaftar" />
       </form>
     </div>
   </body>

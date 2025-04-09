@@ -1,3 +1,25 @@
+// Add Firebase initialization check at the start
+let app;
+try {
+  app = firebase.app();
+} catch (error) {
+  console.error("Firebase initialization error:", error);
+  // Initialize with config if not already initialized
+  const firebaseConfig = {
+    apiKey: "AIzaSyBZOvvYSy86-JqHxtU2zT8oPSTs7t-_vME",
+    authDomain: "tevxion-store-storage.firebaseapp.com",
+    databaseURL:
+      "https://tevxion-store-storage-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "tevxion-store-storage",
+    storageBucket: "tevxion-store-storage.appspot.com",
+    messagingSenderId: "138176363117",
+    appId: "1:138176363117:web:cdaafd9d6dd5213967dd64",
+    measurementId: "G-ZYMZJW3T2H",
+  };
+
+  app = firebase.initializeApp(firebaseConfig);
+}
+
 function validateName(name) {
   // Empty check
   if (!name.trim()) return "Nama tidak boleh kosong";
@@ -68,6 +90,38 @@ function validateConfirmPassword(confirmPassword) {
   return "";
 }
 
+function validateEmail(email) {
+  if (!email) return "Email tidak boleh kosong";
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return "Format email tidak valid";
+  }
+  return "";
+}
+
+function validateField(input) {
+  const id = input.id;
+  const value = input.value;
+
+  switch (id) {
+    case "fullName":
+      return validateName(value);
+    case "username":
+      return validateUsername(value);
+    case "whatsapp":
+      return validateWhatsApp(value);
+    case "email":
+      return validateEmail(value);
+    case "password":
+      return validatePassword(value);
+    case "confirm_password":
+      return validateConfirmPassword(value);
+    default:
+      return "";
+  }
+}
+
 // Tampilkan error pada masing-masing input
 function showError(inputId, message) {
   const input = document.getElementById(inputId);
@@ -123,67 +177,135 @@ document.addEventListener("DOMContentLoaded", function () {
   enhanceFormButtons();
 });
 
-function handleRegister(event) {
+async function handleRegister(event) {
   event.preventDefault();
 
-  const fullName = document.getElementById("fullName").value;
-  const username = document.getElementById("username").value;
-  const whatsapp = document.getElementById("whatsapp").value;
-  const password = document.getElementById("password").value;
-  const confirmPassword = document.getElementById("confirm_password").value;
+  // Show loading state
+  const submitBtn = document.querySelector('input[type="submit"]');
+  submitBtn.disabled = true;
+  submitBtn.value = "Registering...";
 
-  // Validasi saat submit
-  const nameError = validateName(fullName);
-  if (nameError) {
-    showError("fullName", nameError);
-    return false;
+  try {
+    // Get Firebase Auth instance
+    const auth = firebase.auth();
+    const db = firebase.database();
+
+    // Get form values
+    const fullName = document.getElementById("fullName").value;
+    const username = document.getElementById("username").value;
+    const email = document.getElementById("email").value;
+    const whatsapp = document.getElementById("whatsapp").value;
+    const password = document.getElementById("password").value;
+    const confirmPassword = document.getElementById("confirm_password").value;
+
+    // Validasi input
+    const nameError = validateName(fullName);
+    if (nameError) {
+      showError("fullName", nameError);
+      return false;
+    }
+
+    const usernameError = validateUsername(username);
+    if (usernameError) {
+      showError("username", usernameError);
+      return false;
+    }
+
+    const whatsappError = validateWhatsApp(whatsapp);
+    if (whatsappError) {
+      showError("whatsapp", whatsappError);
+      return false;
+    }
+
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      showError("password", passwordError);
+      return false;
+    }
+
+    const confirmPasswordError = validateConfirmPassword(confirmPassword);
+    if (confirmPasswordError) {
+      showError("confirm_password", confirmPasswordError);
+      return false;
+    }
+
+    // Create user in Firebase Auth
+    const userCredential = await auth.createUserWithEmailAndPassword(
+      email,
+      password
+    );
+    const user = userCredential.user;
+
+    // Hash password before storing
+    const hashedPassword = await hashPassword(password);
+
+    // Add user data to Realtime Database
+    await db.ref("users/" + user.uid).set({
+      uid: user.uid,
+      fullName: fullName,
+      username: username,
+      whatsapp: whatsapp,
+      email: email,
+      password: hashedPassword, // Store hashed password
+      role: "customer",
+      createdAt: firebase.database.ServerValue.TIMESTAMP,
+      lastLogin: firebase.database.ServerValue.TIMESTAMP,
+      accountStatus: "active",
+      metadata: {
+        registrationMethod: "email",
+        userAgent: navigator.userAgent,
+        registrationDate: new Date().toISOString(),
+      },
+    });
+
+    // Send email verification
+    await user.sendEmailVerification();
+
+    // Show success message
+    alert(
+      "Registration successful! Please check your email to verify your account."
+    );
+    window.location.href = "/login/login.html";
+  } catch (error) {
+    console.error("Registration error:", error);
+    let errorMessage = "Registration failed: ";
+
+    switch (error.code) {
+      case "auth/email-already-in-use":
+        errorMessage += "Email already registered";
+        break;
+      case "auth/invalid-email":
+        errorMessage += "Invalid email format";
+        break;
+      case "auth/operation-not-allowed":
+        errorMessage += "Email/password registration is disabled";
+        break;
+      case "auth/weak-password":
+        errorMessage += "Password is too weak";
+        break;
+      default:
+        errorMessage += error.message;
+    }
+
+    alert(errorMessage);
+  } finally {
+    // Reset loading state
+    submitBtn.disabled = false;
+    submitBtn.value = "Register";
   }
 
-  const usernameError = validateUsername(username);
-  if (usernameError) {
-    showError("username", usernameError);
-    return false;
-  }
-
-  const whatsappError = validateWhatsApp(whatsapp);
-  if (whatsappError) {
-    showError("whatsapp", whatsappError);
-    return false;
-  }
-
-  const passwordError = validatePassword(password);
-  if (passwordError) {
-    showError("password", passwordError);
-    return false;
-  }
-
-  const confirmPasswordError = validateConfirmPassword(confirmPassword);
-  if (confirmPasswordError) {
-    showError("confirm_password", confirmPasswordError);
-    return false;
-  }
-
-  // Cek apakah username sudah digunakan
-  const existingUsers = JSON.parse(localStorage.getItem("users")) || [];
-  if (existingUsers.some((user) => user.username === username)) {
-    showError("username", "Username sudah digunakan!");
-    return false;
-  }
-
-  // Simpan user baru dan alihkan ke halaman login
-  const newUser = {
-    fullName,
-    username,
-    whatsapp,
-    password,
-    role: "customer",
-  };
-
-  existingUsers.push(newUser);
-  localStorage.setItem("users", JSON.stringify(existingUsers));
-  alert("Registrasi berhasil! Silakan login untuk melanjutkan.");
-  window.location.href = "/login/login.html";
   return false;
+}
+
+// Add password hashing function
+async function hashPassword(password) {
+  // Simple hash for demo - in production use proper hashing like bcrypt
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password);
+  const hash = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(hash))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
 }
 
 function enhanceFormButtons() {

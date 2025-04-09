@@ -116,7 +116,7 @@ function initGoogleSignIn() {
         sessionStorage.setItem("currentUser", JSON.stringify(user));
 
         // redirect langsung ke halaman toko
-        window.location.href = "/role/customer/customer.html";
+        window.location.href = "../index.html";
       } catch (error) {
         console.error("Error signing in with Google:", error);
         alert("Gagal login dengan Google. Silakan coba lagi.");

@@ -5,103 +5,141 @@ const firebaseConfig = {
   databaseURL:
     "https://tevxion-store-storage-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "tevxion-store-storage",
-  storageBucket: "tevxion-store-storage.firebasestorage.app",
+  storageBucket: "tevxion-store-storage.appspot.com",
   messagingSenderId: "138176363117",
   appId: "1:138176363117:web:cdaafd9d6dd5213967dd64",
   measurementId: "G-ZYMZJW3T2H",
 };
 
+// Initialize Firebase only if not already initialized
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
+
+// Initialize Auth
+const auth = firebase.auth();
+
+// Enable persistence
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch((error) => {
+  console.error("Auth persistence error:", error);
+});
+
+// Initialize other services (only if available)
+let db = null;
+let firestore = null;
+let storage = null;
+
 try {
-  // Initialize Firebase only if not already initialized
-  if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
+  db = firebase.database();
+} catch (e) {
+  console.warn("Realtime Database not initialized:", e);
+}
+
+try {
+  if (firebase.firestore) {
+    firestore = firebase.firestore();
   }
+} catch (e) {
+  console.warn("Firestore not initialized:", e);
+}
 
-  // Define global variables for Firebase services
-  let dbInstance = null;
-  let authInstance = null;
-  let firestoreInstance = null;
-  let storageInstance = null;
+try {
+  storage = firebase.storage();
+} catch (e) {
+  console.warn("Storage not initialized:", e);
+}
 
-  // Function to safely initialize database
-  function initializeDatabase() {
-    if (typeof firebase.database === "function") {
-      dbInstance = firebase.database();
-      window.rtdb = dbInstance;
+// Export initialized services
+window.firebaseServices = {
+  auth,
+  db,
+  firestore,
+  storage,
+};
 
-      // Initialize references only after database is available
-      if (dbInstance) {
-        window.dbRefs = {
-          stockRef: dbInstance.ref("real_time_stock"),
-          updatesRef: dbInstance.ref("stock_updates"),
-          syncRef: dbInstance.ref("stock_sync"),
-          alertsRef: dbInstance.ref("stock_alerts"),
-        };
+// Initialize database
+let dbInstance = null;
+let authInstance = null;
 
-        // Setup stock monitoring
-        window.dbRefs.stockRef.on("value", (snapshot) => {
-          const stocks = snapshot.val();
-          if (stocks) {
-            monitorStockLevels(stocks);
-          }
+// Function to safely initialize database
+function initializeDatabase() {
+  if (typeof firebase.database === "function") {
+    dbInstance = firebase.database();
+    window.rtdb = dbInstance;
+
+    // Initialize references only after database is available
+    if (dbInstance) {
+      window.dbRefs = {
+        stockRef: dbInstance.ref("real_time_stock"),
+        updatesRef: dbInstance.ref("stock_updates"),
+        syncRef: dbInstance.ref("stock_sync"),
+        alertsRef: dbInstance.ref("stock_alerts"),
+      };
+
+      // Setup stock monitoring
+      window.dbRefs.stockRef.on("value", (snapshot) => {
+        const stocks = snapshot.val();
+        if (stocks) {
+          monitorStockLevels(stocks);
+        }
+      });
+    }
+  }
+}
+
+// Function to monitor stock levels
+function monitorStockLevels(stocks) {
+  Object.entries(stocks).forEach(([productId, data]) => {
+    if (data.current_stock <= data.min_stock) {
+      createStockAlert(productId, data);
+    }
+  });
+}
+
+// Function to create stock alerts
+function createStockAlert(productId, stockData) {
+  if (window.dbRefs && window.dbRefs.alertsRef) {
+    const alertData = {
+      product_id: productId,
+      type: "low_stock",
+      current_stock: stockData.current_stock,
+      threshold: stockData.min_stock,
+      created_at: Date.now(),
+      status: "active",
+    };
+
+    window.dbRefs.alertsRef.push(alertData);
+  }
+}
+
+// Initialize other Firebase services
+if (typeof firebase.auth === "function") {
+  authInstance = firebase.auth();
+  window.auth = authInstance;
+
+  // Modifikasi auth state observer
+  firebase.auth().onAuthStateChanged((user) => {
+    if (user) {
+      const currentUser = JSON.parse(sessionStorage.getItem("currentUser"));
+      // Set role tanpa menggunakan custom claims
+      if (currentUser && currentUser.role) {
+        user.getIdTokenResult(true).then((idTokenResult) => {
+          // Simpan role di session storage
+          const userData = {
+            ...currentUser,
+            role: currentUser.role,
+          };
+          sessionStorage.setItem("currentUser", JSON.stringify(userData));
         });
       }
     }
-  }
+  });
+}
 
-  // Function to monitor stock levels
-  function monitorStockLevels(stocks) {
-    Object.entries(stocks).forEach(([productId, data]) => {
-      if (data.current_stock <= data.min_stock) {
-        createStockAlert(productId, data);
-      }
-    });
-  }
-
-  // Function to create stock alerts
-  function createStockAlert(productId, stockData) {
-    if (window.dbRefs && window.dbRefs.alertsRef) {
-      const alertData = {
-        product_id: productId,
-        type: "low_stock",
-        current_stock: stockData.current_stock,
-        threshold: stockData.min_stock,
-        created_at: Date.now(),
-        status: "active",
-      };
-
-      window.dbRefs.alertsRef.push(alertData);
-    }
-  }
-
-  // Initialize other Firebase services
-  if (typeof firebase.auth === "function") {
-    authInstance = firebase.auth();
-    window.auth = authInstance;
-
-    // Modifikasi auth state observer
-    firebase.auth().onAuthStateChanged((user) => {
-      if (user) {
-        const currentUser = JSON.parse(sessionStorage.getItem("currentUser"));
-        // Set role tanpa menggunakan custom claims
-        if (currentUser && currentUser.role) {
-          user.getIdTokenResult(true).then((idTokenResult) => {
-            // Simpan role di session storage
-            const userData = {
-              ...currentUser,
-              role: currentUser.role,
-            };
-            sessionStorage.setItem("currentUser", JSON.stringify(userData));
-          });
-        }
-      }
-    });
-  }
-
-  if (typeof firebase.firestore === "function") {
-    // Update: Use new cache configuration instead of enablePersistence
-    firestoreInstance = firebase.firestore();
-    firestoreInstance.settings({
+if (typeof firebase.firestore === "function") {
+  try {
+    firestore = firebase.firestore();
+    firestore.settings({
       cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED,
       merge: true,
       cache: {
@@ -111,18 +149,22 @@ try {
         lruGarbageCollection: true, // Enable LRU garbage collection
       },
     });
-    window.db = firestoreInstance;
+    window.db = firestore;
+  } catch (e) {
+    console.warn("Firestore settings error:", e);
   }
-
-  if (typeof firebase.storage === "function") {
-    storageInstance = firebase.storage();
-    window.storage = storageInstance;
-  }
-
-  // Initialize database last
-  initializeDatabase();
-
-  console.log("Firebase services initialized successfully");
-} catch (error) {
-  console.error("Firebase initialization error:", error);
 }
+
+if (typeof firebase.storage === "function") {
+  try {
+    storage = firebase.storage();
+    window.storage = storage;
+  } catch (e) {
+    console.warn("Storage initialization error:", e);
+  }
+}
+
+// Initialize database last
+initializeDatabase();
+
+console.log("Firebase services initialized successfully");
