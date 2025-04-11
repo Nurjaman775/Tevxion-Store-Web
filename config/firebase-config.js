@@ -43,10 +43,16 @@ try {
   console.warn("Firestore not initialized:", e);
 }
 
+// Update storage initialization
 try {
-  storage = firebase.storage();
+  if (firebase.storage) {
+    storage = firebase.storage();
+    window.storage = storage;
+  } else {
+    console.warn("Firebase Storage SDK not loaded");
+  }
 } catch (e) {
-  console.warn("Storage not initialized:", e);
+  console.warn("Storage initialization error:", e);
 }
 
 // Export initialized services
