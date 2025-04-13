@@ -30,9 +30,9 @@ function handleLogin(event) {
 
   // login dengan keadaan local
   const defaultUsers = [
-    { username: "tevxion@gmail.com", password: "tevxion123", role: "admin" },
-    { username: "kasir@gmail.com", password: "tevxion123", role: "cashier" },
-    { username: "user@gmail.com", password: "tevxion123", role: "customer" },
+    { username: "tevxion@tevxion.co", password: "Tevxion123", role: "admin" },
+    { username: "kasir@tevxion.co", password: "Tevxion123", role: "cashier" },
+    { username: "user@tevxion.co", password: "Tevxion123", role: "customer" },
   ];
 
   const allUsers = [...defaultUsers, ...users];
