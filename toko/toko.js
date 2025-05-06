@@ -15,7 +15,7 @@ class ShopManager {
     this.apiProducts = []; // Add new property for API products
     this.cart = [];
     this.currentPage = 1;
-    this.ITEMS_PER_PAGE = 10;
+    this.ITEMS_PER_PAGE = 100;
     this.isCartOpen = false; // Add this
 
     this.staticProducts = [
